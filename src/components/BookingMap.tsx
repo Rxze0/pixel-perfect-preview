@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRestaurant, type FloorTable } from "@/lib/restaurants";
+import { useAuth } from "@/lib/auth";
 
 const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30"];
 

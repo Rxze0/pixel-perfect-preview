@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { MENU, MENU_CATEGORIES } from "@/lib/menu";
+import { AccountButton, useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/menu")({
   head: () => ({
@@ -18,11 +19,17 @@ export const Route = createFileRoute("/menu")({
 
 function MenuPage() {
   const [cat, setCat] = useState("All");
+  const auth = useAuth();
+  const favs = auth.user?.favorites ?? [];
+  const toggleFav = (name: string) => {
+    if (!auth.requireUser("Saving favorite dishes")) return;
+    auth.updateUser({ favorites: favs.includes(name) ? favs.filter((f) => f !== name) : [...favs, name] });
+  };
   const list = cat === "All" ? MENU : MENU.filter((d) => d.category === cat);
   return (
     <div className="menu-page">
       <header className="menu-head">
-        <Link to="/" className="for-rest">← Back</Link>
+        <div className="menu-top"><Link to="/" className="for-rest">← Back</Link><AccountButton /></div>
         <div className="eyebrow">Tonight's kitchen</div>
         <h1>The menu</h1>
         <p className="muted">Every dish with calories, protein, fat and carbs per serving.</p>
@@ -35,7 +42,10 @@ function MenuPage() {
       <div className="menu-grid" key={cat}>
         {list.map((d, i) => (
           <article className="menu-card" key={d.name} style={{ ["--i" as string]: i }}>
-            <div className="menu-cat">{d.category}</div>
+            <div className="menu-card-top">
+              <div className="menu-cat">{d.category}</div>
+              <button className={"fav-btn" + (favs.includes(d.name) ? " on" : "")} aria-pressed={favs.includes(d.name)} aria-label={`Save ${d.name} to favorites`} onClick={() => toggleFav(d.name)}>{favs.includes(d.name) ? "♥" : "♡"}</button>
+            </div>
             <h2>{d.name}</h2>
             <p>{d.ingredients}</p>
             <div className="kbju">

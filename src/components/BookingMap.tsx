@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRestaurant, type FloorTable } from "@/lib/restaurants";
+import { useAuth } from "@/lib/auth";
 
 const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30"];
 
 export function BookingMap() {
   const { restaurant, statusOf, book } = useRestaurant();
+  const { requireUser } = useAuth();
   const [pick, setPick] = useState<FloorTable | null>(null);
+  const tryPick = (tb: FloorTable) => { if (requireUser("Booking a table")) setPick(tb); };
   const [time, setTime] = useState(TIMES[2]!);
   return (
     <section className="group booking">
@@ -23,8 +26,8 @@ export function BookingMap() {
           const label = `Table ${tb.label}, ${tb.seats} seats, ${s}`;
           return (
             <g key={tb.id} className={`book-t ${s}`} role="button" tabIndex={s === "free" ? 0 : -1} aria-label={label} aria-disabled={s !== "free"}
-              onClick={() => s === "free" && setPick(tb)}
-              onKeyDown={(e) => { if (s === "free" && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setPick(tb); } }}>
+              onClick={() => s === "free" && tryPick(tb)}
+              onKeyDown={(e) => { if (s === "free" && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); tryPick(tb); } }}>
               <rect x={tb.x} y={tb.y} width={tb.w} height={tb.h} rx={tb.round ? tb.w / 2 : 7} />
               <text x={tb.x + tb.w / 2} y={tb.y + tb.h / 2 + 4} textAnchor="middle">{tb.label}</text>
             </g>

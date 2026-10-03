@@ -230,6 +230,7 @@ function App() {
           </section>
           <section className="group">
             <button className="cta" onClick={() => setPromo(!promo)}>{promo ? "Hide preview" : "Promote quiet hours"}</button>
+            <button className="ghost" onClick={() => go("tables")}>Tables · for waiters</button>
             {promo && (
               <div className="promo">
                 <div className="label">Guests would see</div>

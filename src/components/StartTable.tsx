@@ -13,9 +13,9 @@ const C = iso(10, 6);
 const D = iso(0, 6);
 
 export function StartTable({ onGuest, onRestaurant }: { onGuest: () => void; onRestaurant: () => void }) {
-  const plate = iso(5, 4.9);
-  const cloche = iso(4.2, 1.1);
-  const bell = iso(7.4, 1.6);
+  const plate = iso(5, 5.3);
+  const cloche = iso(3.8, 0.7);
+  const bell = iso(7.6, 1.2);
   return (
     <div className="start-table">
       <div className="side-lab rest" aria-hidden="true">

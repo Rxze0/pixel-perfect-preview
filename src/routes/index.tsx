@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, checkedDishes, lower, rankedZones, type Kind, type Person } from "@/lib/sitabit";
+import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
   head: () => ({

@@ -60,6 +60,16 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.user?.email]);
 
+  // Returning from Google sign-in (full-page redirect): go straight into the guest flow.
+  useEffect(() => {
+    if (!auth.user) return;
+    let after: string | null = null;
+    try { after = sessionStorage.getItem(AFTER_LOGIN_KEY); sessionStorage.removeItem(AFTER_LOGIN_KEY); } catch { /* ignore */ }
+    if (after === null) return;
+    if (after.startsWith("/menu")) { window.location.replace("/menu"); return; }
+    setScreen((s) => (s === "start" ? "setup" : s));
+  }, [auth.user]);
+
   useEffect(() => {
     if (!howWeKnow) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setHowWeKnow(false); };

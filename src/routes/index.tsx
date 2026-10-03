@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, checkedDishes, lower, rankedZones, type Kind } from "@/lib/sitabit";
+import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, checkedDishes, lower, rankedZones, type Kind, type Person } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "SitABit" },
-      { name: "description", content: "Find where and when this place feels right for your occasion, and which dishes are safe for you." },
+      { name: "description", content: "Find where and when this place feels right for your occasion, and which dishes are safe for your table." },
       { property: "og:title", content: "SitABit" },
-      { property: "og:description", content: "Best zone and time for your occasion, plus allergen-safe dishes." },
+      { property: "og:description", content: "Best zone and time for your occasion, plus dishes safe for everyone at your table." },
     ],
   }),
   component: App,
@@ -23,16 +23,31 @@ function Icon({ kind }: { kind: Kind | "info" }) {
   return <svg className="ic-info" width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v5" /><path d="M12 16.5v.01" /></svg>;
 }
 
+let nextPersonId = 1;
+
 function App() {
   const [screen, setScreen] = useState<Screen>("setup");
   const [occId, setOccId] = useState("date");
-  const [allergies, setAllergies] = useState<string[]>(["nuts"]);
+  const [people, setPeople] = useState<Person[]>([{ id: "p0", name: "Me", restrictions: ["nuts"] }]);
+  const [newName, setNewName] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const o = OCC.find((x) => x.id === occId)!;
-  const dishes = checkedDishes(allergies);
+  const dishes = checkedDishes(people);
   const safeCount = dishes.filter((d) => d.kind === "ok").length;
   const go = (s: Screen) => { setScreen(s); scrollRef.current?.scrollTo({ top: 0 }); };
+
+  const addPerson = () => {
+    const name = newName.trim();
+    if (!name) return;
+    setPeople([...people, { id: "p" + nextPersonId++, name, restrictions: [] }]);
+    setNewName("");
+  };
+  const removePerson = (id: string) => setPeople(people.filter((p) => p.id !== id));
+  const toggleRestriction = (id: string, allergen: string) =>
+    setPeople(people.map((p) => p.id === id
+      ? { ...p, restrictions: p.restrictions.includes(allergen) ? p.restrictions.filter((x) => x !== allergen) : [...p.restrictions, allergen] }
+      : p));
 
   const header = (title: string, subline: React.ReactNode) => (
     <div className="head">
@@ -47,7 +62,7 @@ function App() {
   const tabs = (
     <nav className="tabs" aria-label="Sections">
       <button className="tab" onClick={() => go("tonight")} aria-current={screen === "tonight" ? "page" : undefined}>Tonight</button>
-      <button className="tab" onClick={() => go("safe")} aria-current={screen === "safe" ? "page" : undefined}>Safe for you · {safeCount}</button>
+      <button className="tab" onClick={() => go("safe")} aria-current={screen === "safe" ? "page" : undefined}>Safe for your table · {safeCount}</button>
     </nav>
   );
 
@@ -69,14 +84,35 @@ function App() {
             </div>
           </div>
           <div className="group">
-            <div className="label" id="al-label">Anything you can't eat?</div>
-            <div className="chips" role="group" aria-labelledby="al-label">
-              {ALLERGENS.map((a) => (
-                <button key={a.id} className="chip" aria-pressed={allergies.includes(a.id)}
-                  onClick={() => setAllergies(allergies.includes(a.id) ? allergies.filter((x) => x !== a.id) : [...allergies, a.id])}>{a.label}</button>
+            <div className="label" id="who-label">Who's coming?</div>
+            <div className="people" role="group" aria-labelledby="who-label">
+              {people.map((p) => (
+                <div className="person" key={p.id}>
+                  <div className="person-top">
+                    <b>{p.name}</b>
+                    {people.length > 1 && <button className="person-remove" aria-label={`Remove ${p.name}`} onClick={() => removePerson(p.id)}>Remove</button>}
+                  </div>
+                  <div className="chips" role="group" aria-label={`Food restrictions for ${p.name}`}>
+                    {ALLERGENS.map((a) => (
+                      <button key={a.id} className="chip" aria-pressed={p.restrictions.includes(a.id)} onClick={() => toggleRestriction(p.id, a.id)}>{a.label}</button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
-            <div className="muted" style={{ fontSize: 13 }}>Tap again to remove. Leave empty if nothing applies.</div>
+            <div className="person-add">
+              <input
+                className="person-input"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") addPerson(); }}
+                placeholder="Name, e.g. Mom"
+                aria-label="Name of person to add"
+                maxLength={24}
+              />
+              <button className="ghost" onClick={addPerson} disabled={!newName.trim()}>Add</button>
+            </div>
+            <div className="muted" style={{ fontSize: 13 }}>Pick what each person can't eat. Leave empty if nothing applies.</div>
           </div>
         </div></div>
         <div className="cta-wrap"><button className="cta" onClick={() => go("tonight")}>Show me tonight</button></div>
@@ -86,7 +122,8 @@ function App() {
 
   if (screen === "tonight") {
     const zones = rankedZones(o), top = zones[0]!;
-    const diet = allergies.length ? "No " + allergies.map(lower).join(", ") : "No food restrictions";
+    const allRestrictions = [...new Set(people.flatMap((p) => p.restrictions))];
+    const diet = allRestrictions.length ? "No " + allRestrictions.map(lower).join(", ") : "No food restrictions";
     const good = HOURS.filter((h) => h.occ >= o.lo && h.occ <= o.hi).map((h) => h.h + ":00");
     const badge = ["Your vibe", "Could work", "Not your vibe"];
     return (
@@ -127,12 +164,15 @@ function App() {
     );
   }
 
-  const summary = allergies.length ? `${safeCount} of ${DISHES.length} dishes are safe for you right now` : "Add your restrictions to see what is safe for you";
+  const anyRestrictions = people.some((p) => p.restrictions.length);
+  const summary = anyRestrictions
+    ? `${safeCount} of ${DISHES.length} dishes are safe for everyone at your table`
+    : "Add your restrictions to see what is safe for your table";
   return (
     <main className="app" aria-live="polite">
-      {header("Safe for you tonight", <div className="muted" style={{ fontSize: 14 }}>{summary}</div>)}
+      {header("Safe for your table", <div className="muted" style={{ fontSize: 14 }}>{summary}</div>)}
       <div className="scroll" ref={scrollRef}><div className="body" style={{ gap: 10 }}>
-        <div className="note"><Icon kind="info" /><span>Checked against the kitchen's live recipes. Severe allergy? Tell your waiter too, since kitchens share equipment.</span></div>
+        <div className="note"><Icon kind="info" /><span>Checked against the kitchen's live recipes for everyone in your group. Severe allergy? Tell your waiter too, since kitchens share equipment.</span></div>
         <div className="dishes">
           {dishes.map((d) => (
             <div className="dish" key={d.name}><Icon kind={d.kind} /><div><b>{d.name}</b><div className="d">{d.desc}</div><div className={`s ${d.kind}`}>{d.status}</div></div></div>

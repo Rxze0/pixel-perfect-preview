@@ -41,7 +41,7 @@ function App() {
   const [tableId, setTableId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [savedDishes, setSavedDishes] = useState<string[]>([]);
-  const [planHour, setPlanHour] = useState<{ h: number; occ: number } | null>(null);
+  const [planHour, setPlanHour] = useState<{ h: string; occ: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

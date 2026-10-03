@@ -5,8 +5,10 @@ import { toast } from "sonner";
 import { FloorPlan } from "@/components/FloorPlan";
 import { StartTable } from "@/components/StartTable";
 import { OwnerInsights } from "@/components/OwnerInsights";
+import { BookingMap } from "@/components/BookingMap";
+import { RestaurantPicker, useRestaurant } from "@/lib/restaurants";
 import { AccountButton, useAuth } from "@/lib/auth";
-import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, TABLES, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
+import { ALLERGENS, DISHES, HOURS, OCC, TABLES, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -46,6 +48,8 @@ function App() {
   const [planHour, setPlanHour] = useState<{ h: string; occ: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const auth = useAuth();
+  const RESTAURANT_NAME = useRestaurant().restaurant.name;
+  const concept = useRestaurant().restaurant.concept;
   // Signed-in: "Me" uses the profile's restrictions, saved dishes come from favorites.
   useEffect(() => {
     if (!auth.user) return;
@@ -167,6 +171,11 @@ function App() {
           <div>
             <h1>What's tonight?</h1>
             <p className="muted">Tell us once. We'll show you where and when this place feels right for you.</p>
+          </div>
+          <div className="group">
+            <div className="label">The restaurant</div>
+            <RestaurantPicker />
+            <p className="rest-concept">{concept}</p>
           </div>
           <div className="group">
             <div className="label" id="occ-label">The occasion</div>
@@ -370,6 +379,7 @@ function App() {
             <div className="l">{top.vibe} · {top.free} tables free · {top.sound}</div>
           </section>
           <FloorPlan best={top.name} hour={planHour} onPick={(n) => document.getElementById(`zone-${n.replace(/\s+/g, "-")}`)?.scrollIntoView({ behavior: "smooth", block: "center" })} />
+          <BookingMap />
           <section className="group">
             <div className="label">Every zone, right now</div>
              {zones.map((z, index) => {

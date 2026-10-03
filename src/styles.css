@@ -129,3 +129,14 @@
   .tab { min-height: 56px; border: 0; background: transparent; font-size: 15px; color: var(--muted); font-weight: 500; }
   .tab[aria-current="page"] { color: var(--accent); font-weight: 700; box-shadow: inset 0 2px 0 var(--accent); }
 .ic-ok { stroke: var(--safe); } .ic-ask { stroke: var(--ask); } .ic-no { stroke: var(--accent); } .ic-info { stroke: var(--safe); flex: none; margin-top: 1px; }
+
+/* Manager mode */
+.for-rest { display: block; margin: 12px auto 0; background: none; border: 0; color: var(--muted); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; min-height: 44px; }
+.occ-pct { font-family: var(--display); font-size: 20px; font-weight: 700; color: var(--accent); }
+.stat { background: var(--card); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 4px; }
+.stat-n { font-family: var(--display); font-size: 36px; font-weight: 700; color: var(--accent); line-height: 1; }
+.stat-l { font-size: 14px; color: var(--muted); }
+.promo { display: flex; flex-direction: column; gap: 10px; }
+.promo-msg { background: var(--accent); color: var(--ground); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+.promo-msg .k { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.promo-msg .m { font-size: 15px; line-height: 1.4; }

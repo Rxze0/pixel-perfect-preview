@@ -8,6 +8,7 @@ import { OwnerInsights } from "@/components/OwnerInsights";
 import { BookingMap } from "@/components/BookingMap";
 import { RestaurantPicker, useRestaurant } from "@/lib/restaurants";
 import { AccountButton, useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { ALLERGENS, DISHES, HOURS, OCC, TABLES, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
@@ -49,6 +50,7 @@ function App() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const auth = useAuth();
   const RESTAURANT_NAME = useRestaurant().restaurant.name;
+  const restaurantId = useRestaurant().restaurant.id;
   const concept = useRestaurant().restaurant.concept;
   // Signed-in: "Me" uses the profile's restrictions, saved dishes come from favorites.
   useEffect(() => {
@@ -431,7 +433,12 @@ function App() {
                   type="button"
                   className={`chip${feedback === option ? " on" : ""}`}
                   aria-pressed={feedback === option}
-                  onClick={() => { if (auth.requireUser("Leaving feedback")) setFeedback(feedback === option ? null : option); }}
+                  onClick={() => {
+                    if (!auth.requireUser("Leaving feedback")) return;
+                    const next = feedback === option ? null : option;
+                    setFeedback(next);
+                    if (next) void supabase.from("feedback").insert({ restaurant_id: restaurantId, reason: next });
+                  }}
                 >{option}</button>
               ))}
             </div>

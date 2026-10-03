@@ -1,17 +1,15 @@
-/* Demo-only auth: sessions and accounts live in this browser's localStorage.
-   Not secure — any email/password works. Swap for real accounts later. */
+/* Accounts, profiles and staff roles live in Lovable Cloud.
+   "Guest" is a local choice so visitors can browse without an account. */
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode, type Context } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { ALLERGENS } from "@/lib/sitabit";
 
-export type User = { name: string; email: string; restrictions: string[]; favorites: string[] };
+export type User = { id: string; name: string; email: string; restrictions: string[]; favorites: string[] };
 export type Session = { mode: "guest" } | { mode: "user"; user: User } | null;
+export type Staff = { name: string };
 
-const SESSION_KEY = "sitabit-session";
-const ACCOUNTS_KEY = "sitabit-accounts";
-const STAFF_KEY = "sitabit-staff";
-export type Staff = { name: string; since: number };
-/** Demo staff PIN. Real restaurants would get their own. */
-export const DEMO_STAFF_PIN = "1234";
+const GUEST_KEY = "sitabit-guest";
 
 type Ctx = {
   ready: boolean;
@@ -19,20 +17,18 @@ type Ctx = {
   user: User | null;
   isGuest: boolean;
   continueAsGuest: () => void;
-  signIn: (email: string, name?: string) => void;
   signOut: () => void;
-  updateUser: (patch: Partial<User>) => void;
+  updateUser: (patch: Partial<Pick<User, "name" | "restrictions" | "favorites">>) => void;
   /** Returns true if signed in; otherwise opens the soft "sign in to use this" prompt. */
   requireUser: (what?: string) => boolean;
   openAuth: () => void;
   openProfile: () => void;
   openWelcome: () => void;
   staff: Staff | null;
-  /** Calls onIn right away if a staff session exists; otherwise shows the quick PIN login first. */
+  /** Calls onIn right away if a staff account is signed in; otherwise shows the staff sign-in first. */
   enterStaff: (onIn: () => void) => void;
   staffSignOut: () => void;
 };
-// Reuse one context across hot reloads so provider and consumers always match.
 const g = globalThis as unknown as { __sitabitAuthCtx?: Context<Ctx | null> };
 const AuthCtx = (g.__sitabitAuthCtx ??= createContext<Ctx | null>(null));
 export const useAuth = () => {
@@ -41,63 +37,70 @@ export const useAuth = () => {
   return c;
 };
 
-function readAccounts(): Record<string, User> {
-  try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || "{}"); } catch { return {}; }
+async function loadUser(id: string, email: string): Promise<{ user: User; staff: boolean }> {
+  const [{ data: p }, { data: roles }] = await Promise.all([
+    supabase.from("profiles").select("name, restrictions, favorites").eq("id", id).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", id),
+  ]);
+  return {
+    user: { id, email, name: p?.name || email.split("@")[0]!, restrictions: p?.restrictions ?? [], favorites: p?.favorites ?? [] },
+    staff: (roles ?? []).some((r) => r.role === "staff" || r.role === "admin"),
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
-  const [session, setSession] = useState<Session>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isStaff, setIsStaff] = useState(false);
+  const [guest, setGuest] = useState(false);
   const [view, setView] = useState<null | "auth" | "gate" | "profile" | "welcome" | "staff">(null);
-  const [staff, setStaff] = useState<Staff | null>(null);
   const staffNext = useRef<(() => void) | null>(null);
   const [gateWhat, setGateWhat] = useState("This feature");
 
   useEffect(() => {
-    try { setSession(JSON.parse(localStorage.getItem(SESSION_KEY) || "null")); } catch { /* ignore */ }
-    try { setStaff(JSON.parse(localStorage.getItem(STAFF_KEY) || "null")); } catch { /* ignore */ }
-    setReady(true);
+    setGuest(localStorage.getItem(GUEST_KEY) === "1");
+    const apply = async (s: { user: { id: string; email?: string } } | null) => {
+      if (!s) { setUser(null); setIsStaff(false); setReady(true); return; }
+      const r = await loadUser(s.user.id, s.user.email ?? "");
+      setUser(r.user); setIsStaff(r.staff); setReady(true);
+      if (staffNext.current && r.staff) { const n = staffNext.current; staffNext.current = null; setView(null); n(); }
+    };
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED" || event === "INITIAL_SESSION") {
+        setTimeout(() => { void apply(s); }, 0);
+      }
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
-  const persist = (s: Session) => {
-    setSession(s);
-    if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s)); else localStorage.removeItem(SESSION_KEY);
-    if (s?.mode === "user") localStorage.setItem(ACCOUNTS_KEY, JSON.stringify({ ...readAccounts(), [s.user.email]: s.user }));
+  const session: Session = user ? { mode: "user", user } : guest ? { mode: "guest" } : null;
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null); setIsStaff(false); setView(null);
   };
 
-  const user = session?.mode === "user" ? session.user : null;
   const ctx: Ctx = {
-    ready, session, user, isGuest: session?.mode === "guest",
-    continueAsGuest: () => { persist({ mode: "guest" }); setView(null); },
-    signIn: (email, name) => {
-      const key = email.trim().toLowerCase();
-      const existing = readAccounts()[key];
-      const u: User = existing
-        ? { ...existing, name: name?.trim() || existing.name }
-        : { name: name?.trim() || key.split("@")[0]!, email: key, restrictions: [], favorites: [] };
-      persist({ mode: "user", user: u });
-      setView(null);
+    ready, session, user, isGuest: !user && guest,
+    continueAsGuest: () => { localStorage.setItem(GUEST_KEY, "1"); setGuest(true); setView(null); },
+    signOut: () => { void signOut(); },
+    updateUser: (patch) => {
+      if (!user) return;
+      setUser({ ...user, ...patch });
+      void supabase.from("profiles").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", user.id);
     },
-    signOut: () => { persist(null); setView(null); },
-    updateUser: (patch) => { if (user) persist({ mode: "user", user: { ...user, ...patch } }); },
     requireUser: useCallback((what?: string) => {
-      if (session?.mode === "user") return true;
+      if (user) return true;
       setGateWhat(what || "This feature"); setView("gate"); return false;
-    }, [session]),
+    }, [user]),
     openAuth: () => setView("auth"),
     openProfile: () => setView(user ? "profile" : "auth"),
     openWelcome: () => setView("welcome"),
-    staff,
+    staff: user && isStaff ? { name: user.name } : null,
     enterStaff: (onIn) => {
-      if (staff) return onIn();
+      if (user && isStaff) return onIn();
       staffNext.current = onIn; setView("staff");
     },
-    staffSignOut: () => { setStaff(null); localStorage.removeItem(STAFF_KEY); },
-  };
-  const staffSignIn = (name: string) => {
-    const s: Staff = { name: name.trim() || "Staff", since: Date.now() };
-    setStaff(s); localStorage.setItem(STAFF_KEY, JSON.stringify(s)); setView(null);
-    const next = staffNext.current; staffNext.current = null; next?.();
+    staffSignOut: () => { void signOut(); },
   };
 
   useEffect(() => {
@@ -110,9 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthCtx.Provider value={ctx}>
       {children}
-      {view === "staff" && <StaffLogin onClose={() => setView(null)} onSubmit={staffSignIn} />}
+      {view === "staff" && <StaffLogin signedInAs={user?.email ?? null} onClose={() => { staffNext.current = null; setView(null); }} onSwitch={() => void supabase.auth.signOut()} />}
       {view === "welcome" && <Welcome onAuth={() => setView("auth")} onGuest={ctx.continueAsGuest} />}
-      {view === "auth" && <AuthForm onClose={() => setView(null)} onSubmit={ctx.signIn} onGuest={!session ? ctx.continueAsGuest : undefined} />}
+      {view === "auth" && <AuthForm onClose={() => setView(null)} onDone={() => setView(null)} onGuest={!session ? ctx.continueAsGuest : undefined} />}
       {view === "gate" && (
         <Overlay onClose={() => setView(null)} label="Sign in needed">
           <div className="auth-emoji" aria-hidden="true">🔒</div>
@@ -139,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           {user.favorites.length
             ? <div className="chips">{user.favorites.map((f) => <span key={f} className="chip on">♥ {f}</span>)}</div>
             : <p className="auth-p">No favorites yet — tap ♡ on any dish in the menu.</p>}
-          <button className="ghost auth-wide" onClick={() => setView("auth")}>Switch profile</button>
+          <button className="ghost auth-wide" onClick={async () => { await supabase.auth.signOut(); setView("auth"); }}>Switch profile</button>
           <button className="ghost auth-wide auth-out" onClick={ctx.signOut}>Sign out</button>
         </Overlay>
       )}
@@ -164,67 +167,88 @@ function Welcome({ onAuth, onGuest }: { onAuth: () => void; onGuest: () => void 
       <div className="auth-welcome-in">
         <div className="logo" style={{ fontSize: 26 }}>SitABit</div>
         <h1 className="auth-h">Find your table, your vibe and dishes that are safe for you.</h1>
-        <p className="auth-p">Sign in to save your food restrictions, favorite dishes and feedback — or just look around first.</p>
+        <p className="auth-p">Sign in to save your food restrictions, favorite dishes, bookings and feedback — or just look around first.</p>
         <button className="cta" onClick={onAuth}>Sign in / Sign up</button>
         <button className="ghost auth-wide" onClick={onGuest}>Continue as guest</button>
-        <p className="muted" style={{ fontSize: 12, textAlign: "center" }}>Demo version — your data stays in this browser.</p>
       </div>
     </div>
   );
 }
 
-function AuthForm({ onClose, onSubmit, onGuest }: { onClose: () => void; onSubmit: (email: string, name?: string) => void; onGuest?: (() => void) | undefined }) {
-  const [mode, setMode] = useState<"in" | "up">("in");
+async function google(setErr: (s: string) => void) {
+  const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+  if (r.error) setErr("Google sign-in didn't work. Please try again.");
+}
+
+function EmailForm({ mode, onDone }: { mode: "in" | "up"; onDone: () => void }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault(); setErr("");
     if (!/^\S+@\S+\.\S+$/.test(email)) return setErr("Please enter a valid email.");
     if (pw.length < 6) return setErr("Password needs at least 6 characters.");
     if (mode === "up" && !name.trim()) return setErr("What should we call you?");
-    onSubmit(email, mode === "up" ? name : undefined);
+    setBusy(true);
+    if (mode === "up") {
+      const { data, error } = await supabase.auth.signUp({ email, password: pw, options: { emailRedirectTo: window.location.origin, data: { name: name.trim() } } });
+      setBusy(false);
+      if (error) return setErr(error.message);
+      if (!data.session) return setSent(true);
+      onDone();
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
+      setBusy(false);
+      if (error) return setErr(error.message.includes("confirm") ? "Please confirm your email first — check your inbox." : "Wrong email or password.");
+      onDone();
+    }
   };
+  if (sent) return <p className="auth-p">Almost there! We sent a confirmation link to <b>{email}</b>. Open it, then come back and sign in.</p>;
+  return (
+    <form className="auth-form" onSubmit={submit}>
+      {mode === "up" && <label><span>Name</span><input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" /></label>}
+      <label><span>Email</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></label>
+      <label><span>Password</span><input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete={mode === "up" ? "new-password" : "current-password"} /></label>
+      {err && <div className="auth-err" role="alert">{err}</div>}
+      <button className="cta" type="submit" disabled={busy}>{busy ? "One moment…" : mode === "in" ? "Sign in" : "Create account"}</button>
+      <button className="ghost auth-wide" type="button" onClick={() => void google(setErr)}>Continue with Google</button>
+    </form>
+  );
+}
+
+function AuthForm({ onClose, onDone, onGuest }: { onClose: () => void; onDone: () => void; onGuest?: (() => void) | undefined }) {
+  const [mode, setMode] = useState<"in" | "up">("in");
   return (
     <Overlay onClose={onClose} label="Sign in">
       <div className="auth-tabs" role="tablist">
-        <button role="tab" aria-selected={mode === "in"} onClick={() => { setMode("in"); setErr(""); }}>Sign in</button>
-        <button role="tab" aria-selected={mode === "up"} onClick={() => { setMode("up"); setErr(""); }}>Create account</button>
+        <button role="tab" aria-selected={mode === "in"} onClick={() => setMode("in")}>Sign in</button>
+        <button role="tab" aria-selected={mode === "up"} onClick={() => setMode("up")}>Create account</button>
       </div>
-      <form className="auth-form" onSubmit={submit}>
-        {mode === "up" && <label><span>Name</span><input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" /></label>}
-        <label><span>Email</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></label>
-        <label><span>Password</span><input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete={mode === "up" ? "new-password" : "current-password"} /></label>
-        {err && <div className="auth-err" role="alert">{err}</div>}
-        <button className="cta" type="submit">{mode === "in" ? "Sign in" : "Create account"}</button>
-      </form>
+      <EmailForm key={mode} mode={mode} onDone={onDone} />
       {onGuest && <button className="ghost auth-wide" onClick={onGuest}>Continue as guest</button>}
     </Overlay>
   );
 }
 
-function StaffLogin({ onClose, onSubmit }: { onClose: () => void; onSubmit: (name: string) => void }) {
-  const [name, setName] = useState("");
-  const [pin, setPin] = useState("");
-  const [err, setErr] = useState("");
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pin !== DEMO_STAFF_PIN) { setErr("That PIN doesn't match. Try again."); setPin(""); return; }
-    onSubmit(name);
-  };
+function StaffLogin({ signedInAs, onClose, onSwitch }: { signedInAs: string | null; onClose: () => void; onSwitch: () => void }) {
   return (
     <Overlay onClose={onClose} label="Staff sign in">
       <div className="auth-emoji" aria-hidden="true">🛎️</div>
       <div className="sheet-title">Staff sign in</div>
-      <p className="auth-p">Enter your staff PIN. You'll stay signed in on this device, so next time it opens straight away.</p>
-      <form className="auth-form" onSubmit={submit}>
-        <label><span>Your name (optional)</span><input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" /></label>
-        <label><span>Staff PIN</span><input className="staff-pin" value={pin} onChange={(e) => { setPin(e.target.value.replace(/\D/g, "").slice(0, 4)); setErr(""); }} inputMode="numeric" autoComplete="one-time-code" maxLength={4} autoFocus aria-describedby="pin-hint" /></label>
-        <div id="pin-hint" className="muted" style={{ fontSize: 13 }}>Demo PIN: {DEMO_STAFF_PIN}</div>
-        {err && <div className="auth-err" role="alert">{err}</div>}
-        <button className="cta" type="submit" disabled={pin.length < 4}>Open the restaurant view</button>
-      </form>
+      {signedInAs ? (
+        <>
+          <p className="auth-p">You're signed in as <b>{signedInAs}</b>, but this account doesn't have staff access yet. Ask the owner to add you, or sign in with your staff account.</p>
+          <button className="cta" onClick={onSwitch}>Use a different account</button>
+        </>
+      ) : (
+        <>
+          <p className="auth-p">Sign in with your staff account. You'll stay signed in on this device, so next time it opens straight away.</p>
+          <EmailForm mode="in" onDone={() => { /* the restaurant view opens once staff access is confirmed */ }} />
+        </>
+      )}
     </Overlay>
   );
 }

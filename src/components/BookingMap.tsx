@@ -49,7 +49,7 @@ export function BookingMap() {
             <div className="time-grid" role="radiogroup" aria-label="Time">
               {TIMES.map((x) => <button key={x} role="radio" aria-checked={x === time} className={"chip" + (x === time ? " on" : "")} aria-pressed={x === time} onClick={() => setTime(x)}>{x}</button>)}
             </div>
-            <button className="cta" onClick={() => { book({ restaurantId: restaurant.id, tableId: pick.id, time }); toast(`Table ${pick.label} booked for ${time} at ${restaurant.name}`); setPick(null); }}>Confirm booking</button>
+            <button className="cta" onClick={async () => { const err = await book({ restaurantId: restaurant.id, tableId: pick.id, time }); toast(err ?? `Table ${pick.label} booked for ${time} at ${restaurant.name}`); setPick(null); }}>Confirm booking</button>
             <button className="for-rest" onClick={() => setPick(null)}>Cancel</button>
           </div>
         </div>

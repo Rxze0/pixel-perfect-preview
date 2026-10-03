@@ -368,3 +368,4 @@
 .time-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .time-grid .chip.on{border-color:var(--accent);color:var(--accent)}
 @media (max-width:380px){.rest-picker{grid-template-columns:1fr}}
+.staff-pin{font-size:28px;letter-spacing:.5em;text-align:center}

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { toast } from "sonner";
-import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person } from "@/lib/sitabit";
+import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, TABLES, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
   component: App,
 });
 
-type Screen = "start" | "setup" | "tonight" | "safe" | "manager";
+type Screen = "start" | "setup" | "tonight" | "safe" | "manager" | "tables" | "table";
 
 function Icon({ kind }: { kind: Kind | "info" }) {
   if (kind === "ok") return <svg className="ic-ok" width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>;
@@ -36,6 +36,7 @@ function App() {
   const [newName, setNewName] = useState("");
   const [promo, setPromo] = useState(false);
   const [howWeKnow, setHowWeKnow] = useState(false);
+  const [tableId, setTableId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -229,6 +230,7 @@ function App() {
           </section>
           <section className="group">
             <button className="cta" onClick={() => setPromo(!promo)}>{promo ? "Hide preview" : "Promote quiet hours"}</button>
+            <button className="ghost" onClick={() => go("tables")}>Tables · for waiters</button>
             {promo && (
               <div className="promo">
                 <div className="label">Guests would see</div>
@@ -241,6 +243,80 @@ function App() {
           </section>
         </div></div>
         {sheet}
+      </main>
+    );
+  }
+
+  if (screen === "tables") {
+    return (
+      <main key="tables" className="app" aria-live="polite">
+        <div className="head">
+          <div className="head-row">
+            <div className="logo" style={{ fontSize: 18 }}>SitABit</div>
+            <button className="ghost" onClick={() => go("manager")}>Back</button>
+          </div>
+          <div className="title">Tables</div>
+          <div className="meta"><span>{TABLES.length} tables seated now</span><span>·</span><span>Sample data</span></div>
+        </div>
+        <div className="scroll" ref={scrollRef}><div className="body">
+          <div className="note"><Icon kind="info" /><span>Tap a table to see the occasion, everyone's food restrictions, and past favorites. We never show how much a guest spends.</span></div>
+          <section className="group">
+            {TABLES.map((t) => (
+              <button className="table-card" key={t.id} onClick={() => { setTableId(t.id); go("table"); }}>
+                <div className="zone-top">
+                  <b>{t.name} · {t.guests} {t.guests === 1 ? "guest" : "guests"}</b>
+                  <span className="badge f0">{t.occasion}</span>
+                </div>
+                <div className="zone-bottom">
+                  <span>{t.visits > 0 ? `Returning guest · ${t.visits} visits` : "First visit"}</span>
+                  {t.restrictions.length > 0 && <span>No {t.restrictions.map(lower).join(", ")}</span>}
+                </div>
+              </button>
+            ))}
+          </section>
+        </div></div>
+      </main>
+    );
+  }
+
+  if (screen === "table") {
+    const t = TABLES.find((x) => x.id === tableId)!;
+    return (
+      <main key="table" className="app" aria-live="polite">
+        <div className="head">
+          <div className="head-row">
+            <div className="logo" style={{ fontSize: 18 }}>SitABit</div>
+            <button className="ghost" onClick={() => go("tables")}>All tables</button>
+          </div>
+          <div className="title">{t.name}</div>
+          <div className="meta"><span>{t.guests} {t.guests === 1 ? "guest" : "guests"}</span><span>·</span><span>{t.occasion}</span><span>·</span><span>{t.visits > 0 ? `Returning · ${t.visits} visits` : "First visit"}</span></div>
+        </div>
+        <div className="scroll" ref={scrollRef}><div className="body">
+          <section className="group">
+            <div className="label">Food restrictions at this table</div>
+            {t.restrictions.length ? (
+              <div className="chips">{t.restrictions.map((r) => <span key={r} className="chip on">No {lower(r)}</span>)}</div>
+            ) : (
+              <div className="muted" style={{ fontSize: 14 }}>None — everything on the menu is fine.</div>
+            )}
+          </section>
+          <section className="group">
+            <div className="label">Favorites from past visits</div>
+            {t.favorites.length ? (
+              <div className="dishes">
+                {t.favorites.map((f) => (
+                  <div className="dish" key={f}><Icon kind="ok" /><div><b>{f}</b></div></div>
+                ))}
+              </div>
+            ) : (
+              <div className="muted" style={{ fontSize: 14 }}>First visit — no history yet.</div>
+            )}
+          </section>
+          <section className="group">
+            <div className="label">A gentle suggestion</div>
+            <div className="note"><Icon kind="info" /><span>{t.pairing}</span></div>
+          </section>
+        </div></div>
       </main>
     );
   }

@@ -32,6 +32,45 @@ export const DISHES = [
 ] as { name: string; desc: string; a: string[]; t: string[] }[];
 export const RESTAURANT_NAME = "[Restaurant name]";
 
+/* Sample tables for the waiters' view (replace with real order-system data later).
+   Deliberately no spend or bill data — waiters never see how much a guest spends. */
+export type Table = {
+  id: string;
+  name: string;
+  guests: number;
+  occasion: string;
+  visits: number; // 0 = first visit
+  restrictions: string[]; // allergen ids, combined for everyone at the table
+  favorites: string[];
+  pairing: string; // one gentle suggestion for the waiter
+};
+export const TABLES: Table[] = [
+  {
+    id: "t14", name: "Table 14", guests: 2, occasion: "Date", visits: 4,
+    restrictions: ["nuts"],
+    favorites: ["Grilled salmon", "Baursak with honey"],
+    pairing: "They loved the salmon last time — the lemon butter sauce pairs nicely with a glass of dry white.",
+  },
+  {
+    id: "t7", name: "Table 7", guests: 4, occasion: "Family", visits: 0,
+    restrictions: ["gluten", "dairy"],
+    favorites: [],
+    pairing: "First visit — the beef plov is safe for the whole table and a good start.",
+  },
+  {
+    id: "t21", name: "Table 21", guests: 3, occasion: "Friends", visits: 7,
+    restrictions: [],
+    favorites: ["Chicken shashlik", "Lagman", "Pistachio cheesecake"],
+    pairing: "Regulars who order the shashlik every time — the cheesecake is their usual finish.",
+  },
+  {
+    id: "t3", name: "Table 3", guests: 1, occasion: "Solo / study", visits: 2,
+    restrictions: ["seafood"],
+    favorites: ["Vegetable stir-fry"],
+    pairing: "Usually stays a couple of hours — offer a tea refill around the one-hour mark.",
+  },
+];
+
 export type Occ = (typeof OCC)[number];
 export type Kind = "ok" | "ask" | "no";
 export type Person = { id: string; name: string; restrictions: string[] };

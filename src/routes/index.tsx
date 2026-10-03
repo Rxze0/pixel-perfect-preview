@@ -1,78 +1,145 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Heart, Search, Star } from "lucide-react";
-import { RESTAURANTS } from "@/lib/data";
-import { displayStatus, useStore } from "@/lib/store";
+import { createFileRoute } from "@tanstack/react-router";
+import { useRef, useState } from "react";
+import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, checkedDishes, lower, rankedZones, type Kind } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Стол и Меню — каталог ресторанов" },
-      { name: "description", content: "Найдите ресторан, посмотрите КБЖУ блюд, отфильтруйте аллергены и забронируйте стол онлайн." },
-      { property: "og:title", content: "Стол и Меню — каталог ресторанов" },
-      { property: "og:description", content: "Меню с КБЖУ, фильтр аллергенов и свободные столы в реальном времени." },
+      { title: "SitABit" },
+      { name: "description", content: "Find where and when this place feels right for your occasion, and which dishes are safe for you." },
+      { property: "og:title", content: "SitABit" },
+      { property: "og:description", content: "Best zone and time for your occasion, plus allergen-safe dishes." },
     ],
   }),
-  component: Index,
+  component: App,
 });
 
-function Index() {
-  const { tables, now, favRestaurants, toggleFav } = useStore();
-  const [q, setQ] = useState("");
-  const [onlyFav, setOnlyFav] = useState(false);
+type Screen = "setup" | "tonight" | "safe";
 
-  const list = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    return RESTAURANTS.filter((r) => (!s || r.name.toLowerCase().includes(s) || r.cuisine.toLowerCase().includes(s)) && (!onlyFav || favRestaurants.includes(r.id)));
-  }, [q, onlyFav, favRestaurants]);
+function Icon({ kind }: { kind: Kind | "info" }) {
+  if (kind === "ok") return <svg className="ic-ok" width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>;
+  if (kind === "ask") return <svg className="ic-ask" width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 0 1 4.8 1c0 1.7-2.3 2-2.3 3.5" /><path d="M12 17v.01" /></svg>;
+  if (kind === "no") return <svg className="ic-no" width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 6l12 12" /><path d="M18 6L6 18" /></svg>;
+  return <svg className="ic-info" width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v5" /><path d="M12 16.5v.01" /></svg>;
+}
 
+function App() {
+  const [screen, setScreen] = useState<Screen>("setup");
+  const [occId, setOccId] = useState("date");
+  const [allergies, setAllergies] = useState<string[]>(["nuts"]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const o = OCC.find((x) => x.id === occId)!;
+  const dishes = checkedDishes(allergies);
+  const safeCount = dishes.filter((d) => d.kind === "ok").length;
+  const go = (s: Screen) => { setScreen(s); scrollRef.current?.scrollTo({ top: 0 }); };
+
+  const header = (title: string, subline: React.ReactNode) => (
+    <div className="head">
+      <div className="head-row">
+        <div className="logo" style={{ fontSize: 18 }}>SitABit</div>
+        <button className="ghost" onClick={() => go("setup")}>Edit preferences</button>
+      </div>
+      <div className="title">{title}</div>
+      {subline}
+    </div>
+  );
+  const tabs = (
+    <nav className="tabs" aria-label="Sections">
+      <button className="tab" onClick={() => go("tonight")} aria-current={screen === "tonight" ? "page" : undefined}>Tonight</button>
+      <button className="tab" onClick={() => go("safe")} aria-current={screen === "safe" ? "page" : undefined}>Safe for you · {safeCount}</button>
+    </nav>
+  );
+
+  if (screen === "setup") {
+    return (
+      <main className="app" aria-live="polite">
+        <div className="scroll" ref={scrollRef}><div className="setup">
+          <div className="logo" style={{ fontSize: 22 }}>SitABit</div>
+          <div>
+            <h1>What's tonight?</h1>
+            <p className="muted">Tell us once. We'll show you where and when this place feels right for you.</p>
+          </div>
+          <div className="group">
+            <div className="label" id="occ-label">The occasion</div>
+            <div className="occ-grid" role="group" aria-labelledby="occ-label">
+              {OCC.map((x) => (
+                <button key={x.id} className="occ" aria-pressed={x.id === occId} onClick={() => setOccId(x.id)}><b>{x.label}</b><span>{x.sub}</span></button>
+              ))}
+            </div>
+          </div>
+          <div className="group">
+            <div className="label" id="al-label">Anything you can't eat?</div>
+            <div className="chips" role="group" aria-labelledby="al-label">
+              {ALLERGENS.map((a) => (
+                <button key={a.id} className="chip" aria-pressed={allergies.includes(a.id)}
+                  onClick={() => setAllergies(allergies.includes(a.id) ? allergies.filter((x) => x !== a.id) : [...allergies, a.id])}>{a.label}</button>
+              ))}
+            </div>
+            <div className="muted" style={{ fontSize: 13 }}>Tap again to remove. Leave empty if nothing applies.</div>
+          </div>
+        </div></div>
+        <div className="cta-wrap"><button className="cta" onClick={() => go("tonight")}>Show me tonight</button></div>
+      </main>
+    );
+  }
+
+  if (screen === "tonight") {
+    const zones = rankedZones(o), top = zones[0];
+    const diet = allergies.length ? "No " + allergies.map(lower).join(", ") : "No food restrictions";
+    const good = HOURS.filter((h) => h.occ >= o.lo && h.occ <= o.hi).map((h) => h.h + ":00");
+    const badge = ["Your vibe", "Could work", "Not your vibe"];
+    return (
+      <main className="app" aria-live="polite">
+        {header(RESTAURANT_NAME, (
+          <div className="meta"><span><span className="dot" />Live · updated 1 min ago</span><span>·</span><span>{o.label}</span><span>·</span><span>{diet}</span></div>
+        ))}
+        <div className="scroll" ref={scrollRef}><div className="body">
+          <section className="hero">
+            <div className="k">Best for {o.headline} right now</div>
+            <div className="n">{top.name}</div>
+            <div className="l">{top.vibe} · {top.free} tables free · {top.sound}</div>
+          </section>
+          <section className="group">
+            <div className="label">Every zone, right now</div>
+            {zones.map((z) => {
+              const filled = Math.round(z.occ / 20);
+              return (
+                <div className="zone" key={z.name}>
+                  <div className="zone-top"><b>{z.name}</b><span className={`badge f${z.fit}`}>{badge[z.fit]}</span></div>
+                  <div className="meter" role="img" aria-label={`${z.occ}% full`}>{[0, 1, 2, 3, 4].map((i) => <i key={i} className={i < filled ? "on" : ""} />)}</div>
+                  <div className="zone-bottom"><span>{z.vibe} · {z.sound}</span><span>{z.free} of {z.total} tables free</span></div>
+                </div>
+              );
+            })}
+          </section>
+          <section className="group">
+            <div className="label">Best times tonight</div>
+            <div className="chart">
+              <div className="bars">{HOURS.map((h) => <i key={h.h} className={h.occ >= o.lo && h.occ <= o.hi ? "good" : ""} style={{ height: Math.round(h.occ * 1.15) }} title={`${h.h}:00 · ${h.occ}% full`} />)}</div>
+              <div className="hours">{HOURS.map((h) => <span key={h.h} className={h.now ? "now" : ""}>{h.now ? "Now" : h.h + ":00"}</span>)}</div>
+              <div className="chart-foot"><span className="muted">Feels right for you at </span><b>{good.length ? good.join(" · ") : "no hour tonight, try another day"}</b></div>
+            </div>
+          </section>
+        </div></div>
+        {tabs}
+      </main>
+    );
+  }
+
+  const summary = allergies.length ? `${safeCount} of ${DISHES.length} dishes are safe for you right now` : "Add your restrictions to see what is safe for you";
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-16 pt-6">
-      <h1 className="text-3xl font-bold leading-tight sm:text-5xl">Куда пойдём <span className="text-accent italic">сегодня?</span></h1>
-      <p className="mt-2 text-muted-foreground">Меню с КБЖУ, фильтр аллергенов и свободные столы прямо сейчас.</p>
-
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-        <label className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Название или кухня…" maxLength={60}
-            className="h-12 w-full rounded-xl border bg-card pl-10 pr-3 outline-none focus:ring-2 focus:ring-ring" />
-        </label>
-        <button onClick={() => setOnlyFav(!onlyFav)} aria-pressed={onlyFav}
-          className={`flex h-12 items-center justify-center gap-2 rounded-xl border px-4 font-semibold transition ${onlyFav ? "bg-primary text-primary-foreground" : "bg-card"}`}>
-          <Heart className={`h-4 w-4 ${onlyFav ? "fill-current" : ""}`} /> Избранные
-        </button>
-      </div>
-
-      <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {list.map((r, i) => {
-          const free = r.tables.filter((t) => displayStatus(tables[t.id], now) === "free").length;
-          const fav = favRestaurants.includes(r.id);
-          return (
-            <article key={r.id} className="card-surface group relative overflow-hidden animate-in fade-in slide-in-from-bottom-3" style={{ animationDelay: `${i * 60}ms`, animationFillMode: "both" }}>
-              <Link to="/restaurant/$id" params={{ id: r.id }} className="block">
-                <div className="aspect-[16/10] overflow-hidden">
-                  <img src={r.img} alt={r.name} width={1024} height={640} loading={i < 2 ? "eager" : "lazy"} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                </div>
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <h2 className="min-w-0 truncate text-xl font-semibold">{r.name}</h2>
-                    <span className="flex shrink-0 items-center gap-1 text-sm font-bold"><Star className="h-4 w-4 fill-accent text-accent" />{r.rating}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{r.cuisine} · {r.address}</p>
-                  <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-free/25 px-3 py-1 text-sm font-semibold">
-                    <span className="pulse-dot h-2 w-2 rounded-full bg-free" aria-hidden /> Свободно столов: {free} из {r.tables.length}
-                  </p>
-                </div>
-              </Link>
-              <button aria-label={fav ? "Убрать из избранного" : "В избранное"} onClick={() => toggleFav("favRestaurants", r.id)}
-                className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-card/90 backdrop-blur transition hover:scale-110">
-                <Heart className={`h-5 w-5 ${fav ? "fill-busy text-busy" : ""}`} />
-              </button>
-            </article>
-          );
-        })}
-        {list.length === 0 && <p className="text-muted-foreground">Ничего не найдено.</p>}
-      </div>
+    <main className="app" aria-live="polite">
+      {header("Safe for you tonight", <div className="muted" style={{ fontSize: 14 }}>{summary}</div>)}
+      <div className="scroll" ref={scrollRef}><div className="body" style={{ gap: 10 }}>
+        <div className="note"><Icon kind="info" /><span>Checked against the kitchen's live recipes. Severe allergy? Tell your waiter too, since kitchens share equipment.</span></div>
+        <div className="dishes">
+          {dishes.map((d) => (
+            <div className="dish" key={d.name}><Icon kind={d.kind} /><div><b>{d.name}</b><div className="d">{d.desc}</div><div className={`s ${d.kind}`}>{d.status}</div></div></div>
+          ))}
+        </div>
+      </div></div>
+      {tabs}
     </main>
   );
 }

@@ -176,7 +176,7 @@
 @keyframes meter-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 @supports (view-transition-name: none) {
-  .screen-transitioning .app { animation: none; }
+  .app { animation: none; }
   ::view-transition-old(root) { animation: screen-out .2s ease both; }
   ::view-transition-new(root) { animation: screen-in .3s cubic-bezier(.22, 1, .36, 1) both; }
   @keyframes screen-out { to { opacity: 0; transform: translateY(-5px); } }

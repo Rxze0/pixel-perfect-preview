@@ -115,9 +115,18 @@ function App() {
   );
   const tabs = (
     <nav className="tabs" aria-label="Sections">
-      <button className="tab" onClick={() => go("tonight")} aria-current={screen === "tonight" ? "page" : undefined}>Tonight</button>
-      <button className="tab" onClick={() => go("safe")} aria-current={screen === "safe" ? "page" : undefined}>Safe for your table · {safeCount}</button>
-      <button className="tab" onClick={() => go("after")} aria-current={screen === "after" ? "page" : undefined}>After your visit</button>
+      <button className="tab" onClick={() => go("tonight")} aria-current={screen === "tonight" ? "page" : undefined}>
+        <svg className="tab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>
+        <span>Tonight</span>
+      </button>
+      <button className="tab" onClick={() => go("safe")} aria-current={screen === "safe" ? "page" : undefined} aria-label={`Safe for your table, ${safeCount} dishes`}>
+        <svg className="tab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" /><path d="M9 12l2 2 4-4" /></svg>
+        <span>Safe · {safeCount}</span>
+      </button>
+      <button className="tab" onClick={() => go("after")} aria-current={screen === "after" ? "page" : undefined}>
+        <svg className="tab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" /></svg>
+        <span>After visit</span>
+      </button>
     </nav>
   );
 
@@ -332,7 +341,10 @@ function App() {
     return (
       <main key="tonight" className="app" aria-live="polite">
         {header(RESTAURANT_NAME, (
-          <div className="meta">{liveBadge}<span>·</span><span>{o.label}</span><span>·</span><span>{diet}</span></div>
+          <>
+            <div className="meta">{liveBadge}</div>
+            <div className="meta-chips"><span className="pill">{o.label}</span><span className="pill">{diet}</span></div>
+          </>
         ))}
         <div className="scroll" ref={scrollRef}><div className="body">
           <section className="hero">

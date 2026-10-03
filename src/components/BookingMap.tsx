@@ -14,11 +14,11 @@ export function BookingMap() {
   return (
     <section className="group booking">
       <div className="label">Book a table · {restaurant.name}</div>
-      <svg className="book-svg" viewBox="0 0 320 240" role="group" aria-label={`Table layout of ${restaurant.name}`}>
+      <svg className="book-svg" viewBox="0 -14 320 254" role="group" aria-label={`Table layout of ${restaurant.name}`}>
         {restaurant.areas.map((a) => (
           <g key={a.name}>
             <rect className="book-area" x={a.x} y={a.y} width={a.w} height={a.h} rx="10" />
-            <text className="book-area-l" x={a.x + 6} y={a.y + a.h - 6}>{a.name}</text>
+            <text className="book-area-l" x={a.x + 6} y={a.y - 6}>{a.name}</text>
           </g>
         ))}
         {restaurant.tables.map((tb) => {

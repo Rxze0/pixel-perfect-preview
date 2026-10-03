@@ -140,3 +140,9 @@
 .promo-msg { background: var(--accent); color: var(--ground); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
 .promo-msg .k { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .promo-msg .m { font-size: 15px; line-height: 1.4; }
+
+/* "Tell me when it's my vibe" + toast */
+.zone-notify { align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1px dashed var(--border); background: transparent; font-size: 13px; font-weight: 500; color: var(--muted); }
+.zone-notify:hover { border-color: var(--accent); color: var(--accent); }
+.zone-notify svg { stroke: currentColor; flex: none; }
+.toaster [data-sonner-toast] { border-radius: 14px; box-shadow: 0 14px 40px rgba(0,0,0,.5); font-family: var(--body); font-size: 14px; padding: 13px 15px; }

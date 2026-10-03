@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- SitABit sample data and ranking/allergen logic live in src/lib/sitabit.ts, UI in src/routes/index.tsx; styles are the prototype CSS ported verbatim into src/styles.css — keeps parity with the original prototype.

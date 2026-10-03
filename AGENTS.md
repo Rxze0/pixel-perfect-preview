@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - SitABit sample data and ranking/allergen logic live in src/lib/sitabit.ts, UI in src/routes/index.tsx; styles are the prototype CSS ported verbatim into src/styles.css — keeps parity with the original prototype.
+- Screen motion uses progressive browser view transitions with CSS entrance fallback and reduced-motion overrides — keeps navigation smooth without a runtime animation dependency.

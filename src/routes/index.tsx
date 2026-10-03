@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { toast } from "sonner";
 import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person } from "@/lib/sitabit";
 
@@ -10,6 +11,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Find where and when this place feels right for your occasion, and which dishes are safe for your table." },
       { property: "og:title", content: "SitABit" },
       { property: "og:description", content: "Best zone and time for your occasion, plus dishes safe for everyone at your table." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: App,
@@ -45,7 +48,20 @@ function App() {
   const o = OCC.find((x) => x.id === occId)!;
   const dishes = checkedDishes(people);
   const safeCount = dishes.filter((d) => d.kind === "ok").length;
-  const go = (s: Screen) => { setScreen(s); scrollRef.current?.scrollTo({ top: 0 }); };
+  const go = (s: Screen) => {
+    if (s === screen) return;
+    const changeScreen = () => {
+      flushSync(() => setScreen(s));
+      scrollRef.current?.scrollTo({ top: 0 });
+    };
+    if (document.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      document.documentElement.classList.add("screen-transitioning");
+      const transition = document.startViewTransition(changeScreen);
+      void transition.finished.finally(() => document.documentElement.classList.remove("screen-transitioning"));
+    } else {
+      changeScreen();
+    }
+  };
 
   const addPerson = () => {
     const name = newName.trim();
@@ -100,7 +116,7 @@ function App() {
 
   if (screen === "setup") {
     return (
-      <main className="app" aria-live="polite">
+      <main key="setup" className="app" aria-live="polite">
         <div className="scroll" ref={scrollRef}><div className="setup">
           <div className="logo" style={{ fontSize: 22 }}>SitABit</div>
           <div>
@@ -161,7 +177,7 @@ function App() {
     const calmest = [...ZONES].sort((a, b) => a.occ - b.occ)[0]!;
     const firstBusy = HOURS.find((h) => h.occ >= QUIET);
     return (
-      <main className="app" aria-live="polite">
+      <main key="manager" className="app" aria-live="polite">
         <div className="head">
           <div className="head-row">
             <div className="logo" style={{ fontSize: 18 }}>SitABit</div>
@@ -218,7 +234,7 @@ function App() {
     const good = HOURS.filter((h) => h.occ >= o.lo && h.occ <= o.hi).map((h) => h.h + ":00");
     const badge = ["Your vibe", "Could work", "Not your vibe"];
     return (
-      <main className="app" aria-live="polite">
+      <main key="tonight" className="app" aria-live="polite">
         {header(RESTAURANT_NAME, (
           <div className="meta">{liveBadge}<span>·</span><span>{o.label}</span><span>·</span><span>{diet}</span></div>
         ))}
@@ -230,10 +246,10 @@ function App() {
           </section>
           <section className="group">
             <div className="label">Every zone, right now</div>
-            {zones.map((z) => {
+             {zones.map((z, index) => {
               const filled = Math.round(z.occ / 20);
               return (
-                <div className="zone" key={z.name}>
+                 <div className="zone ranked-zone" key={z.name} style={{ "--rank": index } as React.CSSProperties}>
                   <div className="zone-top"><b>{z.name}</b><span className={`badge f${z.fit}`}>{badge[z.fit]}</span></div>
                   <div className="meter" role="img" aria-label={`${z.occ}% full`}>{[0, 1, 2, 3, 4].map((i) => <i key={i} className={i < filled ? "on" : ""} />)}</div>
                   <div className="zone-bottom"><span>{z.vibe} · {z.sound}</span><span>{z.free} of {z.total} tables free</span></div>
@@ -267,7 +283,7 @@ function App() {
     ? `${safeCount} of ${DISHES.length} dishes are safe for everyone at your table`
     : "Add your restrictions to see what is safe for your table";
   return (
-    <main className="app" aria-live="polite">
+    <main key="safe" className="app" aria-live="polite">
       {header("Safe for your table", <div className="muted" style={{ fontSize: 14 }}>{summary}</div>)}
       <div className="scroll" ref={scrollRef}><div className="body" style={{ gap: 10 }}>
         <div className="note"><Icon kind="info" /><span>Checked against the kitchen's live recipes for everyone in your group. Severe allergy? Tell your waiter too, since kitchens share equipment.</span></div>

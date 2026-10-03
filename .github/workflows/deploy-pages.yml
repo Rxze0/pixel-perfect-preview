@@ -41,7 +41,7 @@ jobs:
             if [ -f "$f" ]; then SHELL_HTML="$f"; break; fi
           done
           if [ -z "$SHELL_HTML" ]; then echo "No HTML page found in $OUT"; find "$OUT" -maxdepth 2 -name "*.html"; exit 1; fi
-          [ "$SHELL_HTML" != "$OUT/index.html" ] && cp "$SHELL_HTML" "$OUT/index.html"
+          if [ "$SHELL_HTML" != "$OUT/index.html" ]; then cp "$SHELL_HTML" "$OUT/index.html"; fi
           cp "$SHELL_HTML" "$OUT/404.html"
           touch "$OUT/.nojekyll"
           rm -rf site && cp -r "$OUT" site

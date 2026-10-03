@@ -59,7 +59,6 @@ export function StartTable({ onGuest, onRestaurant }: { onGuest: () => void; onR
           {/* glass */}
           <g transform={`translate(${plate[0] + 30} ${plate[1] - 34})`}>
             <ellipse cx="0" cy="16" rx="9" ry="4" fill="#1B1E27" />
-            <path d="M -8 -12 L 8 -12 L 5 8 L -5 8 Z" fill="#3A4а5E" opacity="0.9" />
             <path d="M -8 -12 L 8 -12 L 5 8 L -5 8 Z" fill="#46536E" opacity="0.85" />
             <ellipse cx="0" cy="-12" rx="8" ry="3.4" fill="#5A6A8C" />
           </g>

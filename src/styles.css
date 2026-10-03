@@ -257,3 +257,27 @@
   .start-table:has(.side-btn.guest:hover) .side-guest,.start-table:has(.side-btn.guest:focus-visible) .side-guest,
   .start-table:has(.side-btn.rest:hover) .side-rest,.start-table:has(.side-btn.rest:focus-visible) .side-rest{transform:none}
 }
+
+/* --- Menu page --- */
+.menu-page{max-width:1120px;margin:0 auto;padding:24px 18px 64px;min-height:100vh}
+.menu-head{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.menu-head .for-rest{align-self:flex-start;margin:0 0 8px}
+.menu-head h1{font-family:"Bricolage Grotesque",sans-serif;font-size:clamp(32px,6vw,52px);margin:0;line-height:1}
+.menu-head .eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.14em;font-size:12px;font-weight:600}
+.menu-filters{display:flex;gap:8px;overflow-x:auto;padding:4px 0 14px;position:sticky;top:0;z-index:2;background:var(--bg,#12141C);scrollbar-width:none}
+.menu-chip{flex:none;border:1px solid rgba(255,255,255,.12);background:transparent;color:inherit;padding:9px 16px;border-radius:999px;font:inherit;font-size:14px;cursor:pointer;transition:all .2s}
+.menu-chip:hover{border-color:rgba(245,165,36,.5)}
+.menu-chip.on{background:var(--accent);color:#12141C;border-color:var(--accent);font-weight:600}
+.menu-grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:640px){.menu-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1000px){.menu-grid{grid-template-columns:repeat(3,1fr)}}
+.menu-card{display:flex;flex-direction:column;gap:10px;padding:20px;border-radius:18px;background:linear-gradient(160deg,#1C1F2A,#161821);border:1px solid rgba(255,255,255,.06);box-shadow:0 10px 30px -18px rgba(0,0,0,.8);transition:transform .25s ease,border-color .25s,box-shadow .25s;animation:screen-enter .4s ease both;animation-delay:calc(var(--i)*35ms)}
+.menu-card:hover{transform:translateY(-4px);border-color:rgba(245,165,36,.35);box-shadow:0 16px 36px -16px rgba(245,165,36,.25)}
+.menu-cat{color:var(--accent);font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:600}
+.menu-card h2{font-family:"Bricolage Grotesque",sans-serif;font-size:19px;line-height:1.2;margin:0}
+.menu-card p{margin:0;font-size:14px;line-height:1.5;opacity:.7;flex:1}
+.kbju{display:flex;flex-wrap:wrap;gap:6px}
+.kbju span{font-size:12px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.kbju b{font-weight:700}
+.kbju .kcal{background:rgba(245,165,36,.14);border-color:rgba(245,165,36,.35);color:var(--accent)}
+@media(prefers-reduced-motion:reduce){.menu-card{animation:none;transition:none}.menu-card:hover{transform:none}}

@@ -7,7 +7,9 @@ const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "2
 
 export function BookingMap() {
   const { restaurant, statusOf, book } = useRestaurant();
+  const { requireUser } = useAuth();
   const [pick, setPick] = useState<FloorTable | null>(null);
+  const tryPick = (tb: FloorTable) => { if (requireUser("Booking a table")) setPick(tb); };
   const [time, setTime] = useState(TIMES[2]!);
   return (
     <section className="group booking">

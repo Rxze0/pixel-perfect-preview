@@ -157,7 +157,7 @@ function App() {
           <div>
             <h1>Who's at the table?</h1>
           </div>
-          <StartTable onGuest={() => go("setup")} onRestaurant={() => go("manager")} />
+          <StartTable onGuest={() => { go("setup"); if (!auth.session) auth.openWelcome(); }} onRestaurant={() => auth.enterStaff(() => go("manager"))} />
         </div></div>
       </main>
     );
@@ -237,6 +237,7 @@ function App() {
           <div className="head-row">
             <div className="logo" style={{ fontSize: 18 }}>SitABit</div>
             <button className="ghost" onClick={() => go("start")}>Switch role</button>
+            <button className="ghost" onClick={() => { auth.staffSignOut(); go("start"); }}>Staff sign out</button>
           </div>
           <div className="title">{RESTAURANT_NAME} · Staff & owner</div>
           <div className="meta">{liveBadge}<span>·</span><span>Sample data</span></div>

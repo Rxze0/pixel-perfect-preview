@@ -1,6 +1,6 @@
 /* Demo-only auth: sessions and accounts live in this browser's localStorage.
    Not secure — any email/password works. Swap for real accounts later. */
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode, type Context } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode, type Context } from "react";
 import { ALLERGENS } from "@/lib/sitabit";
 
 export type User = { name: string; email: string; restrictions: string[]; favorites: string[] };
@@ -8,6 +8,10 @@ export type Session = { mode: "guest" } | { mode: "user"; user: User } | null;
 
 const SESSION_KEY = "sitabit-session";
 const ACCOUNTS_KEY = "sitabit-accounts";
+const STAFF_KEY = "sitabit-staff";
+export type Staff = { name: string; since: number };
+/** Demo staff PIN. Real restaurants would get their own. */
+export const DEMO_STAFF_PIN = "1234";
 
 type Ctx = {
   ready: boolean;
@@ -22,6 +26,11 @@ type Ctx = {
   requireUser: (what?: string) => boolean;
   openAuth: () => void;
   openProfile: () => void;
+  openWelcome: () => void;
+  staff: Staff | null;
+  /** Calls onIn right away if a staff session exists; otherwise shows the quick PIN login first. */
+  enterStaff: (onIn: () => void) => void;
+  staffSignOut: () => void;
 };
 // Reuse one context across hot reloads so provider and consumers always match.
 const g = globalThis as unknown as { __sitabitAuthCtx?: Context<Ctx | null> };
@@ -39,11 +48,14 @@ function readAccounts(): Record<string, User> {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<Session>(null);
-  const [view, setView] = useState<null | "auth" | "gate" | "profile">(null);
+  const [view, setView] = useState<null | "auth" | "gate" | "profile" | "welcome" | "staff">(null);
+  const [staff, setStaff] = useState<Staff | null>(null);
+  const staffNext = useRef<(() => void) | null>(null);
   const [gateWhat, setGateWhat] = useState("This feature");
 
   useEffect(() => {
     try { setSession(JSON.parse(localStorage.getItem(SESSION_KEY) || "null")); } catch { /* ignore */ }
+    try { setStaff(JSON.parse(localStorage.getItem(STAFF_KEY) || "null")); } catch { /* ignore */ }
     setReady(true);
   }, []);
 
@@ -74,6 +86,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [session]),
     openAuth: () => setView("auth"),
     openProfile: () => setView(user ? "profile" : "auth"),
+    openWelcome: () => setView("welcome"),
+    staff,
+    enterStaff: (onIn) => {
+      if (staff) return onIn();
+      staffNext.current = onIn; setView("staff");
+    },
+    staffSignOut: () => { setStaff(null); localStorage.removeItem(STAFF_KEY); },
+  };
+  const staffSignIn = (name: string) => {
+    const s: Staff = { name: name.trim() || "Staff", since: Date.now() };
+    setStaff(s); localStorage.setItem(STAFF_KEY, JSON.stringify(s)); setView(null);
+    const next = staffNext.current; staffNext.current = null; next?.();
   };
 
   useEffect(() => {
@@ -86,7 +110,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthCtx.Provider value={ctx}>
       {children}
-      {ready && !session && !view && <Welcome onAuth={() => setView("auth")} onGuest={ctx.continueAsGuest} />}
+      {view === "staff" && <StaffLogin onClose={() => setView(null)} onSubmit={staffSignIn} />}
+      {view === "welcome" && <Welcome onAuth={() => setView("auth")} onGuest={ctx.continueAsGuest} />}
       {view === "auth" && <AuthForm onClose={() => setView(null)} onSubmit={ctx.signIn} onGuest={!session ? ctx.continueAsGuest : undefined} />}
       {view === "gate" && (
         <Overlay onClose={() => setView(null)} label="Sign in needed">
@@ -175,6 +200,31 @@ function AuthForm({ onClose, onSubmit, onGuest }: { onClose: () => void; onSubmi
         <button className="cta" type="submit">{mode === "in" ? "Sign in" : "Create account"}</button>
       </form>
       {onGuest && <button className="ghost auth-wide" onClick={onGuest}>Continue as guest</button>}
+    </Overlay>
+  );
+}
+
+function StaffLogin({ onClose, onSubmit }: { onClose: () => void; onSubmit: (name: string) => void }) {
+  const [name, setName] = useState("");
+  const [pin, setPin] = useState("");
+  const [err, setErr] = useState("");
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pin !== DEMO_STAFF_PIN) { setErr("That PIN doesn't match. Try again."); setPin(""); return; }
+    onSubmit(name);
+  };
+  return (
+    <Overlay onClose={onClose} label="Staff sign in">
+      <div className="auth-emoji" aria-hidden="true">🛎️</div>
+      <div className="sheet-title">Staff sign in</div>
+      <p className="auth-p">Enter your staff PIN. You'll stay signed in on this device, so next time it opens straight away.</p>
+      <form className="auth-form" onSubmit={submit}>
+        <label><span>Your name (optional)</span><input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" /></label>
+        <label><span>Staff PIN</span><input className="staff-pin" value={pin} onChange={(e) => { setPin(e.target.value.replace(/\D/g, "").slice(0, 4)); setErr(""); }} inputMode="numeric" autoComplete="one-time-code" maxLength={4} autoFocus aria-describedby="pin-hint" /></label>
+        <div id="pin-hint" className="muted" style={{ fontSize: 13 }}>Demo PIN: {DEMO_STAFF_PIN}</div>
+        {err && <div className="auth-err" role="alert">{err}</div>}
+        <button className="cta" type="submit" disabled={pin.length < 4}>Open the restaurant view</button>
+      </form>
     </Overlay>
   );
 }

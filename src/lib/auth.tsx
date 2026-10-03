@@ -1,8 +1,7 @@
-/* Accounts, profiles and staff roles live in Lovable Cloud.
-   "Guest" is a local choice so visitors can browse without an account. */
+/* Demo accounts live only in this browser (localStorage). No server, no email
+   confirmation — any email + password of 6+ characters works. "Guest" is a
+   local choice so visitors can browse without an account. */
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode, type Context } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { ALLERGENS } from "@/lib/sitabit";
 
 export type User = { id: string; name: string; email: string; restrictions: string[]; favorites: string[] };
@@ -10,6 +9,17 @@ export type Session = { mode: "guest" } | { mode: "user"; user: User } | null;
 export type Staff = { name: string };
 
 const GUEST_KEY = "sitabit-guest";
+const USERS_KEY = "sitabit-users";
+const CURRENT_KEY = "sitabit-user";
+
+type StoredUser = User & { password: string };
+
+function readUsers(): StoredUser[] {
+  try { return JSON.parse(localStorage.getItem(USERS_KEY) ?? "[]") as StoredUser[]; } catch { return []; }
+}
+function writeUsers(users: StoredUser[]) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
 
 type Ctx = {
   ready: boolean;
@@ -37,61 +47,43 @@ export const useAuth = () => {
   return c;
 };
 
-async function loadUser(id: string, email: string): Promise<{ user: User; staff: boolean }> {
-  const [{ data: p }, { data: roles }] = await Promise.all([
-    supabase.from("profiles").select("name, restrictions, favorites").eq("id", id).maybeSingle(),
-    supabase.from("user_roles").select("role").eq("user_id", id),
-  ]);
-  return {
-    user: { id, email, name: p?.name || email.split("@")[0]!, restrictions: p?.restrictions ?? [], favorites: p?.favorites ?? [] },
-    staff: (roles ?? []).some((r) => r.role === "staff" || r.role === "admin"),
-  };
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [isStaff, setIsStaff] = useState(false);
   const [guest, setGuest] = useState(false);
   const [view, setView] = useState<null | "auth" | "gate" | "profile" | "welcome" | "staff">(null);
   const staffNext = useRef<(() => void) | null>(null);
   const [gateWhat, setGateWhat] = useState("This feature");
   const [staffPin, setStaffPin] = useState<Staff | null>(null);
-  useEffect(() => {
-    try { const v = localStorage.getItem("sitabit-staff"); if (v) setStaffPin(JSON.parse(v)); } catch { /* ignore */ }
-  }, []);
 
   useEffect(() => {
+    try { const v = localStorage.getItem("sitabit-staff"); if (v) setStaffPin(JSON.parse(v)); } catch { /* ignore */ }
     setGuest(localStorage.getItem(GUEST_KEY) === "1");
-    const apply = async (s: { user: { id: string; email?: string } } | null) => {
-      if (!s) { setUser(null); setIsStaff(false); setReady(true); return; }
-      const r = await loadUser(s.user.id, s.user.email ?? "");
-      setUser(r.user); setIsStaff(r.staff); setReady(true);
-      setView((v) => (v === "auth" || v === "welcome" || v === "gate" ? null : v));
-      if (staffNext.current && r.staff) { const n = staffNext.current; staffNext.current = null; setView(null); n(); }
-    };
-    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED" || event === "INITIAL_SESSION") {
-        setTimeout(() => { void apply(s); }, 0);
-      }
-    });
-    return () => sub.subscription.unsubscribe();
+    const cur = localStorage.getItem(CURRENT_KEY);
+    if (cur) {
+      const found = readUsers().find((u) => u.email === cur);
+      if (found) setUser({ id: found.id, name: found.name, email: found.email, restrictions: found.restrictions, favorites: found.favorites });
+    }
+    setReady(true);
   }, []);
 
   const session: Session = user ? { mode: "user", user } : guest ? { mode: "guest" } : null;
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null); setIsStaff(false); setView(null);
+
+  const signIn = (u: StoredUser) => {
+    localStorage.setItem(CURRENT_KEY, u.email);
+    setUser({ id: u.id, name: u.name, email: u.email, restrictions: u.restrictions, favorites: u.favorites });
+    setView(null);
   };
 
   const ctx: Ctx = {
     ready, session, user, isGuest: !user && guest,
     continueAsGuest: () => { localStorage.setItem(GUEST_KEY, "1"); setGuest(true); setView(null); },
-    signOut: () => { void signOut(); },
+    signOut: () => { localStorage.removeItem(CURRENT_KEY); setUser(null); setView(null); },
     updateUser: (patch) => {
       if (!user) return;
-      setUser({ ...user, ...patch });
-      void supabase.from("profiles").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", user.id);
+      const next = { ...user, ...patch };
+      setUser(next);
+      writeUsers(readUsers().map((u) => (u.email === user.email ? { ...u, ...patch } : u)));
     },
     requireUser: useCallback((what?: string) => {
       if (user) return true;
@@ -128,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const n = staffNext.current; staffNext.current = null; n?.();
       }} />}
       {view === "welcome" && <Welcome onAuth={() => setView("auth")} onGuest={ctx.continueAsGuest} />}
-      {view === "auth" && <AuthForm onClose={() => setView(null)} onDone={() => setView(null)} onGuest={!session ? ctx.continueAsGuest : undefined} />}
+      {view === "auth" && <AuthForm onClose={() => setView(null)} onSignIn={signIn} onGuest={!session ? ctx.continueAsGuest : undefined} />}
       {view === "gate" && (
         <Overlay onClose={() => setView(null)} label="Sign in needed">
           <div className="auth-emoji" aria-hidden="true">🔒</div>
@@ -155,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           {user.favorites.length
             ? <div className="chips">{user.favorites.map((f) => <span key={f} className="chip on">♥ {f}</span>)}</div>
             : <p className="auth-p">No favorites yet — tap ♡ on any dish in the menu.</p>}
-          <button className="ghost auth-wide" onClick={async () => { await supabase.auth.signOut(); setView("auth"); }}>Switch profile</button>
+          <button className="ghost auth-wide" onClick={() => { localStorage.removeItem(CURRENT_KEY); setUser(null); setView("auth"); }}>Switch profile</button>
           <button className="ghost auth-wide auth-out" onClick={ctx.signOut}>Sign out</button>
         </Overlay>
       )}
@@ -188,58 +180,41 @@ function Welcome({ onAuth, onGuest }: { onAuth: () => void; onGuest: () => void 
   );
 }
 
-export const AFTER_LOGIN_KEY = "sitabit-after-login";
-async function google(setErr: (s: string) => void) {
-  // Remember the intent so a full-page redirect lands back inside the app, not on the start screen.
-  try { sessionStorage.setItem(AFTER_LOGIN_KEY, window.location.pathname); } catch { /* ignore */ }
-  const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-  if (r.redirected) return;
-  if (r.error) {
-    try { sessionStorage.removeItem(AFTER_LOGIN_KEY); } catch { /* ignore */ }
-    setErr("Google sign-in didn't work. Please try again.");
-  }
-}
-
-function EmailForm({ mode, onDone }: { mode: "in" | "up"; onDone: () => void }) {
+function EmailForm({ mode, onSignIn }: { mode: "in" | "up"; onSignIn: (u: StoredUser) => void }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState(false);
-  const submit = async (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault(); setErr("");
-    if (!/^\S+@\S+\.\S+$/.test(email)) return setErr("Please enter a valid email.");
+    const mail = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(mail)) return setErr("Please enter a valid email.");
     if (pw.length < 6) return setErr("Password needs at least 6 characters.");
-    if (mode === "up" && !name.trim()) return setErr("What should we call you?");
-    setBusy(true);
+    const users = readUsers();
+    const found = users.find((u) => u.email === mail);
     if (mode === "up") {
-      const { data, error } = await supabase.auth.signUp({ email, password: pw, options: { emailRedirectTo: window.location.origin, data: { name: name.trim() } } });
-      setBusy(false);
-      if (error) return setErr(error.message);
-      if (!data.session) return setSent(true);
-      onDone();
+      if (!name.trim()) return setErr("What should we call you?");
+      if (found) return setErr("This email already has an account — sign in instead.");
+      const u: StoredUser = { id: crypto.randomUUID(), name: name.trim(), email: mail, password: pw, restrictions: [], favorites: [] };
+      writeUsers([...users, u]);
+      onSignIn(u);
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
-      setBusy(false);
-      if (error) return setErr(error.message.includes("confirm") ? "Please confirm your email first — check your inbox." : "Wrong email or password.");
-      onDone();
+      if (!found || found.password !== pw) return setErr("Wrong email or password.");
+      onSignIn(found);
     }
   };
-  if (sent) return <p className="auth-p">Almost there! We sent a confirmation link to <b>{email}</b>. Open it, then come back and sign in.</p>;
   return (
     <form className="auth-form" onSubmit={submit}>
       {mode === "up" && <label><span>Name</span><input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" /></label>}
       <label><span>Email</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></label>
       <label><span>Password</span><input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete={mode === "up" ? "new-password" : "current-password"} /></label>
       {err && <div className="auth-err" role="alert">{err}</div>}
-      <button className="cta" type="submit" disabled={busy}>{busy ? "One moment…" : mode === "in" ? "Sign in" : "Create account"}</button>
-      <button className="ghost auth-wide" type="button" onClick={() => void google(setErr)}>Continue with Google</button>
+      <button className="cta" type="submit">{mode === "in" ? "Sign in" : "Create account"}</button>
     </form>
   );
 }
 
-function AuthForm({ onClose, onDone, onGuest }: { onClose: () => void; onDone: () => void; onGuest?: (() => void) | undefined }) {
+function AuthForm({ onClose, onSignIn, onGuest }: { onClose: () => void; onSignIn: (u: StoredUser) => void; onGuest?: (() => void) | undefined }) {
   const [mode, setMode] = useState<"in" | "up">("in");
   return (
     <Overlay onClose={onClose} label="Sign in">
@@ -247,7 +222,7 @@ function AuthForm({ onClose, onDone, onGuest }: { onClose: () => void; onDone: (
         <button role="tab" aria-selected={mode === "in"} onClick={() => setMode("in")}>Sign in</button>
         <button role="tab" aria-selected={mode === "up"} onClick={() => setMode("up")}>Create account</button>
       </div>
-      <EmailForm key={mode} mode={mode} onDone={onDone} />
+      <EmailForm key={mode} mode={mode} onSignIn={onSignIn} />
       {onGuest && <button className="ghost auth-wide" onClick={onGuest}>Continue as guest</button>}
     </Overlay>
   );

@@ -7,8 +7,7 @@ import { StartTable } from "@/components/StartTable";
 import { OwnerInsights } from "@/components/OwnerInsights";
 import { BookingMap } from "@/components/BookingMap";
 import { RestaurantPicker, useRestaurant } from "@/lib/restaurants";
-import { AccountButton, AFTER_LOGIN_KEY, useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { AccountButton, useAuth } from "@/lib/auth";
 import { ALLERGENS, DISHES, HOURS, OCC, TABLES, ZONES, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
@@ -36,6 +35,16 @@ function Icon({ kind }: { kind: Kind | "info" }) {
 
 let nextPersonId = 1;
 
+/** Demo mode: feedback is kept only in this browser. */
+function saveFeedback(restaurantId: string, reason: string) {
+  try {
+    const key = "sitabit-feedback";
+    const list = JSON.parse(localStorage.getItem(key) ?? "[]") as { restaurantId: string; reason: string; at: string }[];
+    list.push({ restaurantId, reason, at: new Date().toISOString() });
+    localStorage.setItem(key, JSON.stringify(list));
+  } catch { /* ignore */ }
+}
+
 function App() {
   const [screen, setScreen] = useState<Screen>("start");
   const [occId, setOccId] = useState("date");
@@ -62,15 +71,6 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.user?.email]);
 
-  // Returning from Google sign-in (full-page redirect): go straight into the guest flow.
-  useEffect(() => {
-    if (!auth.user) return;
-    let after: string | null = null;
-    try { after = sessionStorage.getItem(AFTER_LOGIN_KEY); sessionStorage.removeItem(AFTER_LOGIN_KEY); } catch { /* ignore */ }
-    if (after === null) return;
-    if (after.startsWith("/menu")) { window.location.replace("/menu"); return; }
-    setScreen((s) => (s === "start" ? "setup" : s));
-  }, [auth.user]);
 
   useEffect(() => {
     if (!howWeKnow) return;
@@ -443,7 +443,7 @@ function App() {
                     if (!auth.requireUser("Leaving feedback")) return;
                     const next = feedback === option ? null : option;
                     setFeedback(next);
-                    if (next) void supabase.from("feedback").insert({ restaurant_id: restaurantId, reason: next });
+                    if (next) saveFeedback(restaurantId, next);
                   }}
                 >{option}</button>
               ))}
@@ -508,7 +508,7 @@ function App() {
                     if (!auth.requireUser("Leaving a review")) return;
                     const text = reviewText.trim();
                     if (text.length < 3) return;
-                    void supabase.from("feedback").insert({ restaurant_id: restaurantId, reason: text.slice(0, 500) });
+                    saveFeedback(restaurantId, text.slice(0, 500));
                     setReviewSent(true);
                   }}
                 >Send review</button>

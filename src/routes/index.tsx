@@ -7,7 +7,7 @@ import { StartTable } from "@/components/StartTable";
 import { OwnerInsights } from "@/components/OwnerInsights";
 import { BookingMap } from "@/components/BookingMap";
 import { RestaurantPicker, useRestaurant } from "@/lib/restaurants";
-import { AccountButton, useAuth } from "@/lib/auth";
+import { AccountButton, AFTER_LOGIN_KEY, useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { ALLERGENS, DISHES, HOURS, OCC, TABLES, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
 
@@ -169,7 +169,7 @@ function App() {
           <div>
             <h1>Who's at the table?</h1>
           </div>
-          <StartTable onGuest={() => { go("setup"); if (!auth.session) auth.openWelcome(); }} onRestaurant={() => auth.enterStaff(() => go("manager"))} />
+          <StartTable onGuest={() => { go("setup"); if (auth.ready && !auth.session) auth.openWelcome(); }} onRestaurant={() => auth.enterStaff(() => go("manager"))} />
         </div></div>
       </main>
     );

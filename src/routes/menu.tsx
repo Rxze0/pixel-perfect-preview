@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { MENU, MENU_CATEGORIES } from "@/lib/menu";
+import { RestaurantPicker, useRestaurant } from "@/lib/restaurants";
 import { AccountButton, useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/menu")({
@@ -20,26 +20,30 @@ export const Route = createFileRoute("/menu")({
 function MenuPage() {
   const [cat, setCat] = useState("All");
   const auth = useAuth();
+  const { restaurant } = useRestaurant();
+  const MENU = restaurant.menu, MENU_CATEGORIES = restaurant.categories;
+  const cat2 = MENU_CATEGORIES.includes(cat) ? cat : "All";
   const favs = auth.user?.favorites ?? [];
   const toggleFav = (name: string) => {
     if (!auth.requireUser("Saving favorite dishes")) return;
     auth.updateUser({ favorites: favs.includes(name) ? favs.filter((f) => f !== name) : [...favs, name] });
   };
-  const list = cat === "All" ? MENU : MENU.filter((d) => d.category === cat);
+  const list = cat2 === "All" ? MENU : MENU.filter((d) => d.category === cat2);
   return (
     <div className="menu-page">
       <header className="menu-head">
         <div className="menu-top"><Link to="/" className="for-rest">← Back</Link><AccountButton /></div>
-        <div className="eyebrow">Tonight's kitchen</div>
-        <h1>The menu</h1>
+        <div className="eyebrow">{restaurant.tagline}</div>
+        <h1>{restaurant.name} menu</h1>
         <p className="muted">Every dish with calories, protein, fat and carbs per serving.</p>
+        <div className="menu-picker"><RestaurantPicker /></div>
       </header>
       <div className="menu-filters" role="tablist">
         {MENU_CATEGORIES.map((c) => (
-          <button key={c} role="tab" aria-selected={cat === c} className={"menu-chip" + (cat === c ? " on" : "")} onClick={() => setCat(c)}>{c}</button>
+          <button key={c} role="tab" aria-selected={cat2 === c} className={"menu-chip" + (cat2 === c ? " on" : "")} onClick={() => setCat(c)}>{c}</button>
         ))}
       </div>
-      <div className="menu-grid" key={cat}>
+      <div className="menu-grid" key={restaurant.id + cat2}>
         {list.map((d, i) => (
           <article className="menu-card" key={d.name} style={{ ["--i" as string]: i }}>
             <div className="menu-card-top">

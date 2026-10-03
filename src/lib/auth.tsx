@@ -146,7 +146,7 @@ function Welcome({ onAuth, onGuest }: { onAuth: () => void; onGuest: () => void 
   );
 }
 
-function AuthForm({ onClose, onSubmit, onGuest }: { onClose: () => void; onSubmit: (email: string, name?: string) => void; onGuest?: () => void }) {
+function AuthForm({ onClose, onSubmit, onGuest }: { onClose: () => void; onSubmit: (email: string, name?: string) => void; onGuest?: (() => void) | undefined }) {
   const [mode, setMode] = useState<"in" | "up">("in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

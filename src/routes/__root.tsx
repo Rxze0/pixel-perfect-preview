@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
+import { RestaurantProvider } from "@/lib/restaurants";
 
 function NotFoundComponent() {
   return (
@@ -120,7 +121,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Outlet />
+        <RestaurantProvider>
+          <Outlet />
+        </RestaurantProvider>
       </AuthProvider>
       <Toaster
         position="bottom-center"

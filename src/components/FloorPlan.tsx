@@ -65,8 +65,8 @@ export function FloorPlan({ best, hour, onPick }: { best: string; hour: { h: str
         <span><i className="lg free" />Free</span>
         <span><i className="lg taken" />Taken</span>
         <span><i className="lg vibe" />Your vibe</span>
-        <span className="muted">Tap a zone</span>
       </div>
+      <p className="floor-hint">Tap a zone to jump to it</p>
     </section>
   );
 }

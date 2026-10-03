@@ -108,6 +108,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     staffSignOut: () => { localStorage.removeItem("sitabit-staff"); setStaffPin(null); },
   };
 
+  // Once signed in, sign-in windows never stay open.
+  useEffect(() => {
+    if (user && (view === "auth" || view === "welcome" || view === "gate")) setView(null);
+  }, [user, view]);
+
   useEffect(() => {
     if (!view) return;
     const k = (e: KeyboardEvent) => { if (e.key === "Escape") setView(null); };
@@ -183,9 +188,16 @@ function Welcome({ onAuth, onGuest }: { onAuth: () => void; onGuest: () => void 
   );
 }
 
+export const AFTER_LOGIN_KEY = "sitabit-after-login";
 async function google(setErr: (s: string) => void) {
+  // Remember the intent so a full-page redirect lands back inside the app, not on the start screen.
+  try { sessionStorage.setItem(AFTER_LOGIN_KEY, window.location.pathname); } catch { /* ignore */ }
   const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-  if (r.error) setErr("Google sign-in didn't work. Please try again.");
+  if (r.redirected) return;
+  if (r.error) {
+    try { sessionStorage.removeItem(AFTER_LOGIN_KEY); } catch { /* ignore */ }
+    setErr("Google sign-in didn't work. Please try again.");
+  }
 }
 
 function EmailForm({ mode, onDone }: { mode: "in" | "up"; onDone: () => void }) {

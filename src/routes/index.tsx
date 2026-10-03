@@ -30,6 +30,7 @@ function App() {
   const [occId, setOccId] = useState("date");
   const [people, setPeople] = useState<Person[]>([{ id: "p0", name: "Me", restrictions: ["nuts"] }]);
   const [newName, setNewName] = useState("");
+  const [promo, setPromo] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const o = OCC.find((x) => x.id === occId)!;
@@ -115,7 +116,65 @@ function App() {
             <div className="muted" style={{ fontSize: 13 }}>Pick what each person can't eat. Leave empty if nothing applies.</div>
           </div>
         </div></div>
-        <div className="cta-wrap"><button className="cta" onClick={() => go("tonight")}>Show me tonight</button></div>
+        <div className="cta-wrap">
+          <button className="cta" onClick={() => go("tonight")}>Show me tonight</button>
+          <button className="for-rest" onClick={() => go("manager")}>For restaurants</button>
+        </div>
+      </main>
+    );
+  }
+
+  if (screen === "manager") {
+    const QUIET = 45;
+    const quietHours = HOURS.filter((h) => h.occ < QUIET).map((h) => h.h + ":00");
+    const calmest = [...ZONES].sort((a, b) => a.occ - b.occ)[0]!;
+    const firstBusy = HOURS.find((h) => h.occ >= QUIET);
+    return (
+      <main className="app" aria-live="polite">
+        <div className="head">
+          <div className="head-row">
+            <div className="logo" style={{ fontSize: 18 }}>SitABit</div>
+            <button className="ghost" onClick={() => go("setup")}>Back to guest view</button>
+          </div>
+          <div className="title">{RESTAURANT_NAME} · Manager</div>
+          <div className="meta"><span><span className="dot" />Live · updated 1 min ago</span><span>·</span><span>Sample data</span></div>
+        </div>
+        <div className="scroll" ref={scrollRef}><div className="body">
+          <section className="group">
+            <div className="label">Live occupancy by zone</div>
+            {ZONES.map((z) => (
+              <div className="zone" key={z.name}>
+                <div className="zone-top"><b>{z.name}</b><span className="occ-pct">{z.occ}%</span></div>
+                <div className="meter" role="img" aria-label={`${z.occ}% full`}>{[0, 1, 2, 3, 4].map((i) => <i key={i} className={i < Math.round(z.occ / 20) ? "on" : ""} />)}</div>
+                <div className="zone-bottom"><span>{z.vibe} · {z.sound}</span><span>{z.free} of {z.total} tables free</span></div>
+              </div>
+            ))}
+          </section>
+          <section className="group">
+            <div className="label">Today's occupancy by hour</div>
+            <div className="chart">
+              <div className="bars">{HOURS.map((h) => <i key={h.h} className={h.occ < QUIET ? "good" : ""} style={{ height: Math.round(h.occ * 1.15) }} title={`${h.h}:00 · ${h.occ}% full`} />)}</div>
+              <div className="hours">{HOURS.map((h) => <span key={h.h} className={h.now ? "now" : ""}>{h.now ? "Now" : h.h + ":00"}</span>)}</div>
+              <div className="chart-foot"><span className="muted">Quiet hours (under {QUIET}% full): </span><b>{quietHours.length ? quietHours.join(" · ") : "none today"}</b></div>
+            </div>
+          </section>
+          <section className="stat">
+            <div className="stat-n">128</div>
+            <div className="stat-l">Guests who checked SitABit today</div>
+          </section>
+          <section className="group">
+            <button className="cta" onClick={() => setPromo(!promo)}>{promo ? "Hide preview" : "Promote quiet hours"}</button>
+            {promo && (
+              <div className="promo">
+                <div className="label">Guests would see</div>
+                <div className="promo-msg">
+                  <div className="k">Quiet hours at {RESTAURANT_NAME}</div>
+                  <div className="m">{calmest.name} is calm until {firstBusy ? firstBusy.h + ":00" : "closing"} — book a table and enjoy the quiet.</div>
+                </div>
+              </div>
+            )}
+          </section>
+        </div></div>
       </main>
     );
   }

@@ -369,3 +369,6 @@
 .time-grid .chip.on{border-color:var(--accent);color:var(--accent)}
 @media (max-width:380px){.rest-picker{grid-template-columns:1fr}}
 .staff-pin{font-size:28px;letter-spacing:.5em;text-align:center}
+.ins-away{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:4px}
+.ins-away-tag{font-size:12px;padding:5px 10px;border-radius:999px;background:rgba(245,165,36,.15);color:var(--accent);font-weight:600}
+.ins-away-btn{font:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:999px;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer}

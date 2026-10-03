@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person } from "@/lib/sitabit";
 
@@ -32,7 +32,15 @@ function App() {
   const [people, setPeople] = useState<Person[]>([{ id: "p0", name: "Me", restrictions: ["nuts"] }]);
   const [newName, setNewName] = useState("");
   const [promo, setPromo] = useState(false);
+  const [howWeKnow, setHowWeKnow] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!howWeKnow) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setHowWeKnow(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [howWeKnow]);
 
   const o = OCC.find((x) => x.id === occId)!;
   const dishes = checkedDishes(people);
@@ -50,6 +58,28 @@ function App() {
     setPeople(people.map((p) => p.id === id
       ? { ...p, restrictions: p.restrictions.includes(allergen) ? p.restrictions.filter((x) => x !== allergen) : [...p.restrictions, allergen] }
       : p));
+
+  const liveBadge = (
+    <button className="live-btn" onClick={() => setHowWeKnow(true)}>
+      <span className="dot" />Live · updated 1 min ago
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v5" /><path d="M12 16.5v.01" /></svg>
+    </button>
+  );
+
+  const sheet = howWeKnow && (
+    <div className="sheet-overlay" onClick={() => setHowWeKnow(false)}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label="How we know" onClick={(e) => e.stopPropagation()}>
+        <div className="sheet-handle" />
+        <div className="sheet-title">How we know</div>
+        <div className="sheet-points">
+          <div className="sheet-point"><b>Tables</b><span>Status comes straight from the restaurant's order system — no staff has to tap anything.</span></div>
+          <div className="sheet-point"><b>Vibe</b><span>A small sound sensor in each zone reads the room. Volume only, never recordings.</span></div>
+          <div className="sheet-point"><b>Allergens</b><span>We read the kitchen's live recipes, so it matches what the chefs actually cook.</span></div>
+        </div>
+        <button className="cta" onClick={() => setHowWeKnow(false)}>Got it</button>
+      </div>
+    </div>
+  );
 
   const header = (title: string, subline: React.ReactNode) => (
     <div className="head">

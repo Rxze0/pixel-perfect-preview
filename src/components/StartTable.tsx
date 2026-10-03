@@ -1,7 +1,7 @@
 // Isometric dining-table start screen: guest side (near) vs restaurant side (far).
-const U = 19;
+const U = 22;
 const CX = 200;
-const CY = 150;
+const CY = 120;
 const iso = (x: number, y: number): [number, number] => [CX + (x - y) * U, CY + (x + y) * U * 0.5];
 const pt = (x: number, y: number) => iso(x, y).join(",");
 const DEPTH = 16;
@@ -13,12 +13,12 @@ const C = iso(10, 6);
 const D = iso(0, 6);
 
 export function StartTable({ onGuest, onRestaurant }: { onGuest: () => void; onRestaurant: () => void }) {
-  const plate = iso(5, 4.4);
-  const cloche = iso(5, 1.5);
-  const bell = iso(7.6, 1.9);
+  const plate = iso(5, 4.9);
+  const cloche = iso(4.2, 1.1);
+  const bell = iso(7.4, 1.6);
   return (
     <div className="start-table">
-      <svg viewBox="0 0 400 420" className="start-svg" aria-hidden="true">
+      <svg viewBox="0 0 400 360" className="start-svg" aria-hidden="true">
         {/* table body */}
         <polygon points={`${A.join(",")} ${B.join(",")} ${B[0]},${B[1] + DEPTH} ${A[0]},${A[1] + DEPTH}`} fill="#15171E" />
         <polygon points={`${B.join(",")} ${C.join(",")} ${C[0]},${C[1] + DEPTH} ${B[0]},${B[1] + DEPTH}`} fill="#101218" />

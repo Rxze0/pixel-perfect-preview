@@ -26,8 +26,8 @@ export function BookingMap() {
           const label = `Table ${tb.label}, ${tb.seats} seats, ${s}`;
           return (
             <g key={tb.id} className={`book-t ${s}`} role="button" tabIndex={s === "free" ? 0 : -1} aria-label={label} aria-disabled={s !== "free"}
-              onClick={() => s === "free" && setPick(tb)}
-              onKeyDown={(e) => { if (s === "free" && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setPick(tb); } }}>
+              onClick={() => s === "free" && tryPick(tb)}
+              onKeyDown={(e) => { if (s === "free" && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); tryPick(tb); } }}>
               <rect x={tb.x} y={tb.y} width={tb.w} height={tb.h} rx={tb.round ? tb.w / 2 : 7} />
               <text x={tb.x + tb.w / 2} y={tb.y + tb.h / 2 + 4} textAnchor="middle">{tb.label}</text>
             </g>

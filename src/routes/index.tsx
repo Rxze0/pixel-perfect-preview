@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
   component: App,
 });
 
-type Screen = "setup" | "tonight" | "safe" | "manager";
+type Screen = "start" | "setup" | "tonight" | "safe" | "manager";
 
 function Icon({ kind }: { kind: Kind | "info" }) {
   if (kind === "ok") return <svg className="ic-ok" width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>;
@@ -30,7 +30,7 @@ function Icon({ kind }: { kind: Kind | "info" }) {
 let nextPersonId = 1;
 
 function App() {
-  const [screen, setScreen] = useState<Screen>("setup");
+  const [screen, setScreen] = useState<Screen>("start");
   const [occId, setOccId] = useState("date");
   const [people, setPeople] = useState<Person[]>([{ id: "p0", name: "Me", restrictions: ["nuts"] }]);
   const [newName, setNewName] = useState("");
@@ -114,6 +114,24 @@ function App() {
     </nav>
   );
 
+  if (screen === "start") {
+    return (
+      <main key="start" className="app" aria-live="polite">
+        <div className="scroll" ref={scrollRef}><div className="setup">
+          <div className="logo" style={{ fontSize: 22 }}>SitABit</div>
+          <div>
+            <h1>Who's here?</h1>
+            <p className="muted">Pick how you'll use SitABit today.</p>
+          </div>
+          <div className="occ-grid" role="group" aria-label="Choose your role" style={{ gridTemplateColumns: "1fr" }}>
+            <button className="occ" onClick={() => go("setup")}><b>I'm a guest</b><span>Find where and when this place feels right, and what's safe to eat.</span></button>
+            <button className="occ" onClick={() => go("manager")}><b>I'm the restaurant</b><span>Staff and owner area: live occupancy, quiet hours, guest reach.</span></button>
+          </div>
+        </div></div>
+      </main>
+    );
+  }
+
   if (screen === "setup") {
     return (
       <main key="setup" className="app" aria-live="polite">
@@ -165,7 +183,7 @@ function App() {
         </div></div>
         <div className="cta-wrap">
           <button className="cta" onClick={() => go("tonight")}>Show me tonight</button>
-          <button className="for-rest" onClick={() => go("manager")}>For restaurants</button>
+          <button className="for-rest" onClick={() => go("start")}>Back to start</button>
         </div>
       </main>
     );
@@ -181,9 +199,9 @@ function App() {
         <div className="head">
           <div className="head-row">
             <div className="logo" style={{ fontSize: 18 }}>SitABit</div>
-            <button className="ghost" onClick={() => go("setup")}>Back to guest view</button>
+            <button className="ghost" onClick={() => go("start")}>Switch role</button>
           </div>
-          <div className="title">{RESTAURANT_NAME} · Manager</div>
+          <div className="title">{RESTAURANT_NAME} · Staff & owner</div>
           <div className="meta">{liveBadge}<span>·</span><span>Sample data</span></div>
         </div>
         <div className="scroll" ref={scrollRef}><div className="body">

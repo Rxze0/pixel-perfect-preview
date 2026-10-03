@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
@@ -205,6 +206,12 @@ function App() {
                   <div className="zone-top"><b>{z.name}</b><span className={`badge f${z.fit}`}>{badge[z.fit]}</span></div>
                   <div className="meter" role="img" aria-label={`${z.occ}% full`}>{[0, 1, 2, 3, 4].map((i) => <i key={i} className={i < filled ? "on" : ""} />)}</div>
                   <div className="zone-bottom"><span>{z.vibe} · {z.sound}</span><span>{z.free} of {z.total} tables free</span></div>
+                  {z.fit === 2 && (
+                    <button className="zone-notify" onClick={() => toast(`We'll notify you when ${z.name} matches your vibe.`)}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9.5a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6" /><path d="M10 19a2 2 0 0 0 4 0" /></svg>
+                      Tell me when it's my vibe
+                    </button>
+                  )}
                 </div>
               );
             })}

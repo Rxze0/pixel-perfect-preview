@@ -195,6 +195,7 @@ function App() {
         </div></div>
         <div className="cta-wrap">
           <button className="cta" onClick={() => go("tonight")}>Show me tonight</button>
+          <a className="for-rest" href="/menu">See the full menu</a>
           <button className="for-rest" onClick={() => go("start")}>Back to start</button>
         </div>
       </main>

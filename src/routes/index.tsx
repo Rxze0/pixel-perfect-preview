@@ -46,6 +46,8 @@ function App() {
   const [tableId, setTableId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [savedDishes, setSavedDishes] = useState<string[]>([]);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewSent, setReviewSent] = useState(false);
   const [planHour, setPlanHour] = useState<{ h: string; occ: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const auth = useAuth();
@@ -483,6 +485,36 @@ function App() {
               )}
             </section>
           )}
+          <section className="group">
+            <div className="label">Or write your own review</div>
+            <div className="muted" style={{ fontSize: 13 }}>Tell us in your own words — we read every note.</div>
+            {reviewSent ? (
+              <div className="note"><Icon kind="ok" /><span>Thanks for your review — it went straight to the team.</span></div>
+            ) : (
+              <>
+                <textarea
+                  className="review-input"
+                  placeholder="How was your evening?"
+                  value={reviewText}
+                  maxLength={500}
+                  rows={4}
+                  onChange={(e) => setReviewText(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="cta"
+                  disabled={reviewText.trim().length < 3}
+                  onClick={() => {
+                    if (!auth.requireUser("Leaving a review")) return;
+                    const text = reviewText.trim();
+                    if (text.length < 3) return;
+                    void supabase.from("feedback").insert({ restaurant_id: restaurantId, reason: text.slice(0, 500) });
+                    setReviewSent(true);
+                  }}
+                >Send review</button>
+              </>
+            )}
+          </section>
         </div></div>
         {tabs}
       </main>

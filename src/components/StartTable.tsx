@@ -18,7 +18,7 @@ export function StartTable({ onGuest, onRestaurant }: { onGuest: () => void; onR
   const bell = iso(7.4, 1.6);
   return (
     <div className="start-table">
-      <div className="side-lab" aria-hidden="true">
+      <div className="side-lab rest" aria-hidden="true">
         <b>I'm the restaurant</b>
         <span>See your tables and guests</span>
       </div>
@@ -72,7 +72,7 @@ export function StartTable({ onGuest, onRestaurant }: { onGuest: () => void; onR
       <button type="button" className="side-btn rest" onClick={onRestaurant} aria-label="I'm the restaurant — see your tables and guests" />
       <button type="button" className="side-btn guest" onClick={onGuest} aria-label="I'm a guest — find your vibe and safe dishes" />
       </div>
-      <div className="side-lab" aria-hidden="true">
+      <div className="side-lab guest" aria-hidden="true">
         <b>I'm a guest</b>
         <span>Find your vibe and safe dishes</span>
       </div>

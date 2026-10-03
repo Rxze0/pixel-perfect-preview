@@ -18,17 +18,20 @@ function box(x: number, y: number, w: number, d: number, h: number) {
   return { top: pts(top), right: pts(right), left: pts(left) };
 }
 
-export function FloorPlan({ best, onPick }: { best: string; onPick: (name: string) => void }) {
+export function FloorPlan({ best, hour, onPick }: { best: string; hour: { h: number; occ: number } | null; onPick: (name: string) => void }) {
   const order = [...ZONES].sort((a, b) => LAYOUT[a.name]!.ox + LAYOUT[a.name]!.oy - (LAYOUT[b.name]!.ox + LAYOUT[b.name]!.oy));
   return (
     <section className="group floor">
-      <div className="label">Floor plan, right now</div>
+      <div className="label">Floor plan, {hour ? `${hour.h}:00` : "right now"}</div>
       <svg className="floor-svg" viewBox="-170 -24 330 200" role="img" aria-label={`Floor plan. Best zone for you: ${best}`}>
         {order.map((z) => {
           const L = LAYOUT[z.name]!;
           const w = L.cols + 0.6, d = L.rows + 0.6;
           const p = box(L.ox, L.oy, w, d, 6);
-          const taken = z.total - z.free;
+          // Projected occupancy for a picked hour: scale taken tables by the hour's occupancy vs the zone's current occupancy.
+          const taken = hour
+            ? Math.max(0, Math.min(z.total, Math.round(((z.total - z.free) / z.occ) * hour.occ)))
+            : z.total - z.free;
           const glow = z.name === best;
           const [lx, ly] = iso(L.ox + w / 2, L.oy + d / 2, 6);
           const tables = Array.from({ length: L.cols * L.rows }, (_, i) => i).slice(0, z.total);

@@ -213,8 +213,13 @@
 .fz.glow .fz-top{fill:rgba(245,165,36,.16);stroke:#F5A524;stroke-width:1.6;filter:drop-shadow(0 0 8px rgba(245,165,36,.55))}
 .fz.glow .fz-side.r{fill:rgba(245,165,36,.28)}
 .fz.glow .fz-side.l{fill:rgba(245,165,36,.18)}
+.ft polygon{transition:fill .6s ease}
 .ft.free .t{fill:#8EC5FF}.ft.free .r{fill:#5E8DBD}.ft.free .l{fill:#4A7299}
-.ft.taken .t{fill:#4A4F5E}.ft.taken .r{fill:#363A46}.ft.taken .l{fill:#2C2F39}
+.ft.taken .t{fill:#4A4F5E;animation:ft-pulse 2.8s ease-in-out infinite}
+.ft.taken .r{fill:#363A46}.ft.taken .l{fill:#2C2F39}
+.ft.taken:nth-child(3n) .t{animation-delay:.9s}
+.ft.taken:nth-child(3n+1) .t{animation-delay:1.8s}
+@keyframes ft-pulse{0%,100%{fill:#4A4F5E}50%{fill:#5A6072}}
 .fz-label{font-family:"Bricolage Grotesque",sans-serif;font-size:11px;font-weight:700;fill:var(--text);paint-order:stroke;stroke:#12141C;stroke-width:3px;pointer-events:none;transition:fill .5s}
 .fz.glow .fz-label{fill:#F5A524}
 .floor-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;margin-top:10px;align-items:center}
@@ -222,4 +227,8 @@
 .floor-legend .muted{margin-left:auto}
 .lg{width:11px;height:11px;border-radius:3px;display:inline-block}
 .lg.free{background:#8EC5FF}.lg.taken{background:#4A4F5E}.lg.vibe{background:transparent;border:2px solid #F5A524;box-shadow:0 0 6px rgba(245,165,36,.6)}
-@media (prefers-reduced-motion: reduce){.fz-lift,.fz-top,.fz-side,.fz-label{transition:none}}
+@media (prefers-reduced-motion: reduce){.fz-lift,.fz-top,.fz-side,.fz-label,.ft polygon{transition:none}.ft.taken .t{animation:none}}
+.bar-btn{background:none;border:0;padding:0;cursor:pointer;height:100%;display:flex;align-items:flex-end;justify-content:center;border-radius:4px}
+.bar-btn i{display:block;width:100%;pointer-events:none}
+.bar-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar-btn.sel i{outline:2px solid var(--accent);outline-offset:1px;border-radius:3px}

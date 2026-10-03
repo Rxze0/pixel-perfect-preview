@@ -34,6 +34,7 @@ export const RESTAURANT_NAME = "[Restaurant name]";
 
 export type Occ = (typeof OCC)[number];
 export type Kind = "ok" | "ask" | "no";
+export type Person = { id: string; name: string; restrictions: string[] };
 
 export const lower = (id: string) => ALLERGENS.find((a) => a.id === id)!.label.toLowerCase();
 
@@ -47,13 +48,22 @@ export function rankedZones(o: Occ) {
   return ZONES.map((z) => ({ ...z, fit: fitOf(z.occ, o) }))
     .sort((a, b) => a.fit - b.fit || Math.abs(a.occ - mid) - Math.abs(b.occ - mid));
 }
-export function checkedDishes(sel: string[]) {
+
+/* A dish is safe only if it is safe for EVERY person in the group. */
+export function checkedDishes(people: Person[]) {
   const rank: Record<Kind, number> = { ok: 0, ask: 1, no: 2 };
   return DISHES.map((d) => {
-    const contains = d.a.filter((x) => sel.includes(x));
-    const traces = d.t.filter((x) => sel.includes(x));
-    if (contains.length) return { ...d, kind: "no" as Kind, status: "Contains " + contains.map(lower).join(", ") };
-    if (traces.length) return { ...d, kind: "ask" as Kind, status: "May contain traces of " + traces.map(lower).join(", ") + ", ask staff" };
-    return { ...d, kind: "ok" as Kind, status: sel.length ? "Safe for you" : "No restrictions set" };
+    const blocked = people.filter((p) => d.a.some((x) => p.restrictions.includes(x)));
+    const traced = people.filter((p) => d.t.some((x) => p.restrictions.includes(x)) && !blocked.includes(p));
+    if (blocked.length) {
+      const ids = d.a.filter((x) => blocked.some((p) => p.restrictions.includes(x)));
+      return { ...d, kind: "no" as Kind, status: "Contains " + ids.map(lower).join(", ") + " · not safe for " + blocked.map((p) => p.name).join(", ") };
+    }
+    if (traced.length) {
+      const ids = d.t.filter((x) => traced.some((p) => p.restrictions.includes(x)));
+      return { ...d, kind: "ask" as Kind, status: "May contain traces of " + ids.map(lower).join(", ") + " · ask staff for " + traced.map((p) => p.name).join(", ") };
+    }
+    const anyRestrictions = people.some((p) => p.restrictions.length);
+    return { ...d, kind: "ok" as Kind, status: anyRestrictions ? "Safe for everyone" : "No restrictions set" };
   }).sort((a, b) => rank[a.kind] - rank[b.kind]);
 }

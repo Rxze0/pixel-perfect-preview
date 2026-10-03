@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { toast } from "sonner";
@@ -227,7 +227,7 @@ function App() {
         </div></div>
         <div className="cta-wrap">
           <button className="cta" onClick={() => go("tonight")}>Show me tonight</button>
-          <a className="for-rest" href="/menu">See the full menu</a>
+          <Link className="for-rest" to="/menu">See the full menu</Link>
           <button className="for-rest" onClick={() => go("start")}>Back to start</button>
         </div>
       </main>

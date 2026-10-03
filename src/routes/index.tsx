@@ -14,7 +14,7 @@ export const Route = createFileRoute("/")({
   component: App,
 });
 
-type Screen = "setup" | "tonight" | "safe";
+type Screen = "setup" | "tonight" | "safe" | "manager";
 
 function Icon({ kind }: { kind: Kind | "info" }) {
   if (kind === "ok") return <svg className="ic-ok" width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>;

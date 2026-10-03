@@ -23,7 +23,9 @@ type Ctx = {
   openAuth: () => void;
   openProfile: () => void;
 };
-const AuthCtx = createContext<Ctx | null>(null);
+// Reuse one context across hot reloads so provider and consumers always match.
+const g = globalThis as unknown as { __sitabitAuthCtx?: React.Context<Ctx | null> };
+const AuthCtx = (g.__sitabitAuthCtx ??= createContext<Ctx | null>(null));
 export const useAuth = () => {
   const c = useContext(AuthCtx);
   if (!c) throw new Error("useAuth outside AuthProvider");

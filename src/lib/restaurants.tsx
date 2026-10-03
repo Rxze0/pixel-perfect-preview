@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode, type Context } from "react";
 import type { MenuDish } from "@/lib/menu";
-import { supabase } from "@/integrations/supabase/client";
 
 /* Data shape for a venue. Sample data — replace with the real restaurants later. */
 export type TableStatus = "free" | "booked" | "taken";
@@ -92,9 +91,10 @@ type Ctx = { restaurant: Restaurant; setRestaurant: (id: string) => void; bookin
 const rg = globalThis as unknown as { __sitabitRestCtx?: Context<Ctx | null> };
 const RCtx = (rg.__sitabitRestCtx ??= createContext<Ctx | null>(null));
 
-async function fetchBookings(): Promise<Booking[]> {
-  const { data } = await supabase.rpc("booked_tables");
-  return (data ?? []).map((r) => ({ restaurantId: r.restaurant_id, tableId: r.table_id, time: r.slot }));
+/* Demo mode: bookings are kept only in this browser. */
+const BOOKINGS_KEY = "sitabit-bookings";
+function readBookings(): Booking[] {
+  try { return JSON.parse(localStorage.getItem(BOOKINGS_KEY) ?? "[]") as Booking[]; } catch { return []; }
 }
 
 export function RestaurantProvider({ children }: { children: ReactNode }) {
@@ -103,7 +103,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const saved = localStorage.getItem("sitabit-restaurant");
     if (saved && RESTAURANTS.some((r) => r.id === saved)) setId(saved);
-    void fetchBookings().then(setBookings);
+    setBookings(readBookings());
   }, []);
   const restaurant = RESTAURANTS.find((r) => r.id === id)!;
   useEffect(() => { document.documentElement.style.setProperty("--accent", restaurant.accent); }, [restaurant.accent]);
@@ -112,9 +112,13 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     setRestaurant: (n) => { setId(n); localStorage.setItem("sitabit-restaurant", n); },
     bookings,
     book: async (b) => {
-      const { error } = await supabase.from("bookings").insert({ restaurant_id: b.restaurantId, table_id: b.tableId, slot: b.time });
-      setBookings(await fetchBookings());
-      if (error) return error.code === "23505" ? "Someone just booked this table for that time." : "Booking didn't go through. Please try again.";
+      const all = readBookings();
+      if (all.some((x) => x.restaurantId === b.restaurantId && x.tableId === b.tableId && x.time === b.time)) {
+        return "Someone just booked this table for that time.";
+      }
+      const next = [...all, b];
+      localStorage.setItem(BOOKINGS_KEY, JSON.stringify(next));
+      setBookings(next);
       return null;
     },
     statusOf: (tb) => bookings.some((b) => b.restaurantId === id && b.tableId === tb.id) ? "booked" : tb.status,

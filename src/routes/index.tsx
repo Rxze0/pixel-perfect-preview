@@ -126,13 +126,9 @@ function App() {
         <div className="scroll" ref={scrollRef}><div className="setup">
           <div className="logo" style={{ fontSize: 22 }}>SitABit</div>
           <div>
-            <h1>Who's here?</h1>
-            <p className="muted">Pick how you'll use SitABit today.</p>
+            <h1>Who's at the table?</h1>
           </div>
-          <div className="occ-grid" role="group" aria-label="Choose your role" style={{ gridTemplateColumns: "1fr" }}>
-            <button className="occ" onClick={() => go("setup")}><b>I'm a guest</b><span>Find where and when this place feels right, and what's safe to eat.</span></button>
-            <button className="occ" onClick={() => go("manager")}><b>I'm the restaurant</b><span>Staff and owner area: live occupancy, quiet hours, guest reach.</span></button>
-          </div>
+          <StartTable onGuest={() => go("setup")} onRestaurant={() => go("manager")} />
         </div></div>
       </main>
     );

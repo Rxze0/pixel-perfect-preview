@@ -18,7 +18,7 @@ function box(x: number, y: number, w: number, d: number, h: number) {
   return { top: pts(top), right: pts(right), left: pts(left) };
 }
 
-export function FloorPlan({ best, hour, onPick }: { best: string; hour: { h: number; occ: number } | null; onPick: (name: string) => void }) {
+export function FloorPlan({ best, hour, onPick }: { best: string; hour: { h: string; occ: number } | null; onPick: (name: string) => void }) {
   const order = [...ZONES].sort((a, b) => LAYOUT[a.name]!.ox + LAYOUT[a.name]!.oy - (LAYOUT[b.name]!.ox + LAYOUT[b.name]!.oy));
   return (
     <section className="group floor">

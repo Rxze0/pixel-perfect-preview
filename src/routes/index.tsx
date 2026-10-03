@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { toast } from "sonner";
 import { FloorPlan } from "@/components/FloorPlan";
+import { StartTable } from "@/components/StartTable";
 import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, TABLES, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
@@ -40,7 +41,7 @@ function App() {
   const [tableId, setTableId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [savedDishes, setSavedDishes] = useState<string[]>([]);
-  const [planHour, setPlanHour] = useState<{ h: number; occ: number } | null>(null);
+  const [planHour, setPlanHour] = useState<{ h: string; occ: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -126,13 +127,9 @@ function App() {
         <div className="scroll" ref={scrollRef}><div className="setup">
           <div className="logo" style={{ fontSize: 22 }}>SitABit</div>
           <div>
-            <h1>Who's here?</h1>
-            <p className="muted">Pick how you'll use SitABit today.</p>
+            <h1>Who's at the table?</h1>
           </div>
-          <div className="occ-grid" role="group" aria-label="Choose your role" style={{ gridTemplateColumns: "1fr" }}>
-            <button className="occ" onClick={() => go("setup")}><b>I'm a guest</b><span>Find where and when this place feels right, and what's safe to eat.</span></button>
-            <button className="occ" onClick={() => go("manager")}><b>I'm the restaurant</b><span>Staff and owner area: live occupancy, quiet hours, guest reach.</span></button>
-          </div>
+          <StartTable onGuest={() => go("setup")} onRestaurant={() => go("manager")} />
         </div></div>
       </main>
     );

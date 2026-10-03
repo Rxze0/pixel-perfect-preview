@@ -372,3 +372,6 @@
 .ins-away{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:4px}
 .ins-away-tag{font-size:12px;padding:5px 10px;border-radius:999px;background:rgba(245,165,36,.15);color:var(--accent);font-weight:600}
 .ins-away-btn{font:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:999px;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer}
+.review-input{width:100%;font:inherit;font-size:15px;line-height:1.5;color:var(--ink);background:var(--card);border:2px solid var(--track);border-radius:16px;padding:14px 16px;resize:vertical;min-height:96px;margin:10px 0 14px;transition:border-color .2s ease}
+.review-input::placeholder{color:var(--muted)}
+.review-input:focus{outline:none;border-color:var(--accent)}

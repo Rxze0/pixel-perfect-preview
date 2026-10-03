@@ -56,6 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [view, setView] = useState<null | "auth" | "gate" | "profile" | "welcome" | "staff">(null);
   const staffNext = useRef<(() => void) | null>(null);
   const [gateWhat, setGateWhat] = useState("This feature");
+  const [staffPin, setStaffPin] = useState<Staff | null>(null);
+  useEffect(() => {
+    try { const v = localStorage.getItem("sitabit-staff"); if (v) setStaffPin(JSON.parse(v)); } catch { /* ignore */ }
+  }, []);
 
   useEffect(() => {
     setGuest(localStorage.getItem(GUEST_KEY) === "1");
@@ -95,12 +99,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     openAuth: () => setView("auth"),
     openProfile: () => setView(user ? "profile" : "auth"),
     openWelcome: () => setView("welcome"),
-    staff: user && isStaff ? { name: user.name } : null,
+    staff: staffPin,
     enterStaff: (onIn) => {
-      if (user && isStaff) return onIn();
+      if (staffPin) return onIn();
       staffNext.current = onIn; setView("staff");
     },
-    staffSignOut: () => { void signOut(); },
+    staffSignOut: () => { localStorage.removeItem("sitabit-staff"); setStaffPin(null); },
   };
 
   useEffect(() => {
@@ -113,7 +117,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthCtx.Provider value={ctx}>
       {children}
-      {view === "staff" && <StaffLogin signedInAs={user?.email ?? null} onClose={() => { staffNext.current = null; setView(null); }} onSwitch={() => void supabase.auth.signOut()} />}
+      {view === "staff" && <StaffLogin onClose={() => { staffNext.current = null; setView(null); }} onIn={(st) => {
+        localStorage.setItem("sitabit-staff", JSON.stringify(st)); setStaffPin(st); setView(null);
+        const n = staffNext.current; staffNext.current = null; n?.();
+      }} />}
       {view === "welcome" && <Welcome onAuth={() => setView("auth")} onGuest={ctx.continueAsGuest} />}
       {view === "auth" && <AuthForm onClose={() => setView(null)} onDone={() => setView(null)} onGuest={!session ? ctx.continueAsGuest : undefined} />}
       {view === "gate" && (
@@ -233,22 +240,27 @@ function AuthForm({ onClose, onDone, onGuest }: { onClose: () => void; onDone: (
   );
 }
 
-function StaffLogin({ signedInAs, onClose, onSwitch }: { signedInAs: string | null; onClose: () => void; onSwitch: () => void }) {
+const STAFF_PIN = "1234";
+function StaffLogin({ onClose, onIn }: { onClose: () => void; onIn: (s: Staff) => void }) {
+  const [name, setName] = useState("");
+  const [pin, setPin] = useState("");
+  const [err, setErr] = useState("");
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pin !== STAFF_PIN) return setErr("Wrong PIN. Try again.");
+    onIn({ name: name.trim() || "Staff" });
+  };
   return (
     <Overlay onClose={onClose} label="Staff sign in">
       <div className="auth-emoji" aria-hidden="true">🛎️</div>
       <div className="sheet-title">Staff sign in</div>
-      {signedInAs ? (
-        <>
-          <p className="auth-p">You're signed in as <b>{signedInAs}</b>, but this account doesn't have staff access yet. Ask the owner to add you, or sign in with your staff account.</p>
-          <button className="cta" onClick={onSwitch}>Use a different account</button>
-        </>
-      ) : (
-        <>
-          <p className="auth-p">Sign in with your staff account. You'll stay signed in on this device, so next time it opens straight away.</p>
-          <EmailForm mode="in" onDone={() => { /* the restaurant view opens once staff access is confirmed */ }} />
-        </>
-      )}
+      <p className="auth-p">Enter your name and the staff PIN. You'll stay signed in on this device. Demo PIN: <b>1234</b></p>
+      <form className="auth-form" onSubmit={submit}>
+        <label><span>Name</span><input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" /></label>
+        <label><span>PIN</span><input className="staff-pin" inputMode="numeric" type="password" maxLength={4} value={pin} onChange={(e) => { setPin(e.target.value.replace(/\D/g, "")); setErr(""); }} autoFocus /></label>
+        {err && <div className="auth-err" role="alert">{err}</div>}
+        <button className="cta" type="submit">Enter</button>
+      </form>
     </Overlay>
   );
 }

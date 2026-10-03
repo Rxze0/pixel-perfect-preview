@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { toast } from "sonner";
+import { FloorPlan } from "@/components/FloorPlan";
 import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, TABLES, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
@@ -341,12 +342,13 @@ function App() {
             <div className="n">{top.name}</div>
             <div className="l">{top.vibe} · {top.free} tables free · {top.sound}</div>
           </section>
+          <FloorPlan best={top.name} onPick={(n) => document.getElementById(`zone-${n.replace(/\s+/g, "-")}`)?.scrollIntoView({ behavior: "smooth", block: "center" })} />
           <section className="group">
             <div className="label">Every zone, right now</div>
              {zones.map((z, index) => {
               const filled = Math.round(z.occ / 20);
               return (
-                 <div className="zone ranked-zone" key={z.name} style={{ "--rank": index } as React.CSSProperties}>
+                 <div className="zone ranked-zone" id={`zone-${z.name.replace(/\s+/g, "-")}`} key={z.name} style={{ "--rank": index } as React.CSSProperties}>
                   <div className="zone-top"><b>{z.name}</b><span className={`badge f${z.fit}`}>{badge[z.fit]}</span></div>
                   <div className="meter" role="img" aria-label={`${z.occ}% full`}>{[0, 1, 2, 3, 4].map((i) => <i key={i} className={i < filled ? "on" : ""} />)}</div>
                   <div className="zone-bottom"><span>{z.vibe} · {z.sound}</span><span>{z.free} of {z.total} tables free</span></div>

@@ -200,3 +200,26 @@
 .dish-save.saved .dish-save-box{background:var(--accent);border-color:var(--accent)}
 .dish-save-info{display:flex;flex-direction:column;gap:2px;min-width:0}
 .dish-save-tags{font-size:11px;color:var(--muted)}
+
+/* Isometric floor plan */
+.floor-svg{width:100%;height:auto;display:block;overflow:visible;margin-top:4px}
+.fz{cursor:pointer;outline:none}
+.fz-lift{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.fz-top{fill:#1E2230;stroke:rgba(255,255,255,.08);stroke-width:1;transition:fill .5s,stroke .5s,filter .5s}
+.fz-side.r{fill:#171A25;transition:fill .5s}
+.fz-side.l{fill:#141721;transition:fill .5s}
+.fz:hover .fz-top,.fz:focus-visible .fz-top{stroke:rgba(255,255,255,.3)}
+.fz.glow .fz-lift{transform:translateY(-4px)}
+.fz.glow .fz-top{fill:rgba(245,165,36,.16);stroke:#F5A524;stroke-width:1.6;filter:drop-shadow(0 0 8px rgba(245,165,36,.55))}
+.fz.glow .fz-side.r{fill:rgba(245,165,36,.28)}
+.fz.glow .fz-side.l{fill:rgba(245,165,36,.18)}
+.ft.free .t{fill:#8EC5FF}.ft.free .r{fill:#5E8DBD}.ft.free .l{fill:#4A7299}
+.ft.taken .t{fill:#4A4F5E}.ft.taken .r{fill:#363A46}.ft.taken .l{fill:#2C2F39}
+.fz-label{font-family:"Bricolage Grotesque",sans-serif;font-size:11px;font-weight:700;fill:var(--text);paint-order:stroke;stroke:#12141C;stroke-width:3px;pointer-events:none;transition:fill .5s}
+.fz.glow .fz-label{fill:#F5A524}
+.floor-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;margin-top:10px;align-items:center}
+.floor-legend span{display:inline-flex;align-items:center;gap:6px}
+.floor-legend .muted{margin-left:auto}
+.lg{width:11px;height:11px;border-radius:3px;display:inline-block}
+.lg.free{background:#8EC5FF}.lg.taken{background:#4A4F5E}.lg.vibe{background:transparent;border:2px solid #F5A524;box-shadow:0 0 6px rgba(245,165,36,.6)}
+@media (prefers-reduced-motion: reduce){.fz-lift,.fz-top,.fz-side,.fz-label{transition:none}}

@@ -85,7 +85,7 @@ function App() {
   }
 
   if (screen === "tonight") {
-    const zones = rankedZones(o), top = zones[0];
+    const zones = rankedZones(o), top = zones[0]!;
     const diet = allergies.length ? "No " + allergies.map(lower).join(", ") : "No food restrictions";
     const good = HOURS.filter((h) => h.occ >= o.lo && h.occ <= o.hi).map((h) => h.h + ":00");
     const badge = ["Your vibe", "Could work", "Not your vibe"];

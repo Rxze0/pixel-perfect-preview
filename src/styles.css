@@ -65,6 +65,18 @@
   .cta-wrap { padding: 12px 22px 24px; }
   .cta { width: 100%; min-height: 56px; border: 0; border-radius: 16px; background: var(--accent); color: var(--ground); font-size: 17px; font-weight: 700; }
 
+  /* People */
+  .people { display: flex; flex-direction: column; gap: 10px; }
+  .person { background: var(--card); border: 2px solid var(--track); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .person-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .person-top b { font-size: 17px; }
+  .person-remove { min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent; font-size: 13px; color: var(--muted); }
+  .person-add { display: flex; gap: 8px; }
+  .person-input { flex: 1; min-width: 0; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 2px solid var(--track); background: var(--card); color: var(--text); font-family: inherit; font-size: 15px; }
+  .person-input::placeholder { color: var(--muted); }
+  .person-input:focus-visible { outline: 3px solid var(--safe); outline-offset: 2px; }
+  .person-add .ghost:disabled { opacity: .45; cursor: default; }
+
   /* Header */
   .head { padding: 18px 22px 14px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--line); }
   .head-row { display: flex; justify-content: space-between; align-items: center; }

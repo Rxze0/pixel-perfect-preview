@@ -341,8 +341,10 @@ function App() {
     return (
       <main key="tonight" className="app" aria-live="polite">
         {header(RESTAURANT_NAME, (
-          <div className="meta">{liveBadge}</div>
-          <div className="meta-chips"><span className="pill">{o.label}</span><span className="pill">{diet}</span></div>
+          <>
+            <div className="meta">{liveBadge}</div>
+            <div className="meta-chips"><span className="pill">{o.label}</span><span className="pill">{diet}</span></div>
+          </>
         ))}
         <div className="scroll" ref={scrollRef}><div className="body">
           <section className="hero">

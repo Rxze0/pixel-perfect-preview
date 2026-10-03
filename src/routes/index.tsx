@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
   component: App,
 });
 
-type Screen = "start" | "setup" | "tonight" | "safe" | "manager" | "tables" | "table";
+type Screen = "start" | "setup" | "tonight" | "safe" | "manager" | "tables" | "table" | "after";
 
 function Icon({ kind }: { kind: Kind | "info" }) {
   if (kind === "ok") return <svg className="ic-ok" width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>;
@@ -37,6 +37,8 @@ function App() {
   const [promo, setPromo] = useState(false);
   const [howWeKnow, setHowWeKnow] = useState(false);
   const [tableId, setTableId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [savedDishes, setSavedDishes] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -112,6 +114,7 @@ function App() {
     <nav className="tabs" aria-label="Sections">
       <button className="tab" onClick={() => go("tonight")} aria-current={screen === "tonight" ? "page" : undefined}>Tonight</button>
       <button className="tab" onClick={() => go("safe")} aria-current={screen === "safe" ? "page" : undefined}>Safe for your table · {safeCount}</button>
+      <button className="tab" onClick={() => go("after")} aria-current={screen === "after" ? "page" : undefined}>After your visit</button>
     </nav>
   );
 

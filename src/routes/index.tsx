@@ -375,6 +375,68 @@ function App() {
     );
   }
 
+  if (screen === "after") {
+    const options = ["Food", "Speed", "Service", "Atmosphere", "Price", "Nothing, it was great"];
+    const great = feedback === "Nothing, it was great";
+    return (
+      <main key="after" className="app" aria-live="polite">
+        {header("After your visit", <div className="muted" style={{ fontSize: 14 }}>Thanks for coming by tonight</div>)}
+        <div className="scroll" ref={scrollRef}><div className="body">
+          <section className="group">
+            <div className="label">What could have been better tonight?</div>
+            <div className="chips">
+              {options.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={`chip${feedback === option ? " on" : ""}`}
+                  aria-pressed={feedback === option}
+                  onClick={() => setFeedback(feedback === option ? null : option)}
+                >{option}</button>
+              ))}
+            </div>
+            {feedback && !great && (
+              <div className="note"><Icon kind="info" /><span>Thanks — noted for the team. We'll work on the {feedback.toLowerCase()}.</span></div>
+            )}
+          </section>
+          {great && (
+            <section className="group">
+              <div className="label">Save the dishes you liked?</div>
+              <div className="muted" style={{ fontSize: 13 }}>We'll remember them for your next visit.</div>
+              <div className="dish-save-list">
+                {DISHES.map((d) => {
+                  const saved = savedDishes.includes(d.name);
+                  return (
+                    <label key={d.name} className={`dish-save${saved ? " saved" : ""}`}>
+                      <input
+                        type="checkbox"
+                        checked={saved}
+                        onChange={() =>
+                          setSavedDishes((prev) =>
+                            prev.includes(d.name) ? prev.filter((n) => n !== d.name) : [...prev, d.name]
+                          )
+                        }
+                      />
+                      <span className="dish-save-box" aria-hidden="true">{saved ? "✓" : ""}</span>
+                      <span className="dish-save-info">
+                        <b>{d.name}</b>
+                        <span className="dish-save-tags">{d.tags.join(" · ")}</span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              {savedDishes.length > 0 && (
+                <div className="note"><Icon kind="ok" /><span>Saved {savedDishes.length} {savedDishes.length === 1 ? "dish" : "dishes"} for next time.</span></div>
+              )}
+            </section>
+          )}
+        </div></div>
+        {tabs}
+      </main>
+    );
+  }
+
   const anyRestrictions = people.some((p) => p.restrictions.length);
   const summary = anyRestrictions
     ? `${safeCount} of ${DISHES.length} dishes are safe for everyone at your table`

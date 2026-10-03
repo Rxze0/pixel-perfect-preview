@@ -489,22 +489,5 @@ function App() {
     );
   }
 
-  const anyRestrictions = people.some((p) => p.restrictions.length);
-  const summary = anyRestrictions
-    ? `${safeCount} of ${DISHES.length} dishes are safe for everyone at your table`
-    : "Add your restrictions to see what is safe for your table";
-  return (
-    <main key="safe" className="app" aria-live="polite">
-      {header("Safe for your table", <div className="muted" style={{ fontSize: 14 }}>{summary}</div>)}
-      <div className="scroll" ref={scrollRef}><div className="body" style={{ gap: 10 }}>
-        <div className="note"><Icon kind="info" /><span>Checked against the kitchen's live recipes for everyone in your group. Severe allergy? Tell your waiter too, since kitchens share equipment.</span></div>
-        <div className="dishes">
-          {dishes.map((d) => (
-            <div className="dish" key={d.name}><Icon kind={d.kind} /><div><b>{d.name}</b><div className="d">{d.desc}</div><div className={`s ${d.kind}`}>{d.status}</div></div></div>
-          ))}
-        </div>
-      </div></div>
-      {tabs}
-    </main>
-  );
+  return null;
 }

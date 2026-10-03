@@ -40,6 +40,7 @@ function App() {
   const [tableId, setTableId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [savedDishes, setSavedDishes] = useState<string[]>([]);
+  const [planHour, setPlanHour] = useState<{ h: number; occ: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -342,7 +343,7 @@ function App() {
             <div className="n">{top.name}</div>
             <div className="l">{top.vibe} · {top.free} tables free · {top.sound}</div>
           </section>
-          <FloorPlan best={top.name} onPick={(n) => document.getElementById(`zone-${n.replace(/\s+/g, "-")}`)?.scrollIntoView({ behavior: "smooth", block: "center" })} />
+          <FloorPlan best={top.name} hour={planHour} onPick={(n) => document.getElementById(`zone-${n.replace(/\s+/g, "-")}`)?.scrollIntoView({ behavior: "smooth", block: "center" })} />
           <section className="group">
             <div className="label">Every zone, right now</div>
              {zones.map((z, index) => {
@@ -365,9 +366,9 @@ function App() {
           <section className="group">
             <div className="label">Best times tonight</div>
             <div className="chart">
-              <div className="bars">{HOURS.map((h) => <i key={h.h} className={h.occ >= o.lo && h.occ <= o.hi ? "good" : ""} style={{ height: Math.round(h.occ * 1.15) }} title={`${h.h}:00 · ${h.occ}% full`} />)}</div>
+              <div className="bars">{HOURS.map((h) => <button key={h.h} type="button" className={`bar-btn${planHour?.h === h.h ? " sel" : ""}`} aria-label={`Show the floor plan at ${h.h}:00`} aria-pressed={planHour?.h === h.h} onClick={() => setPlanHour(planHour?.h === h.h ? null : { h: h.h, occ: h.occ })}><i className={h.occ >= o.lo && h.occ <= o.hi ? "good" : ""} style={{ height: Math.round(h.occ * 1.15) }} /></button>)}</div>
               <div className="hours">{HOURS.map((h) => <span key={h.h} className={h.now ? "now" : ""}>{h.now ? "Now" : h.h + ":00"}</span>)}</div>
-              <div className="chart-foot"><span className="muted">Feels right for you at </span><b>{good.length ? good.join(" · ") : "no hour tonight, try another day"}</b></div>
+              <div className="chart-foot"><span className="muted">{planHour ? `Floor plan shows ${planHour.h}:00 — tap again for now. Feels right at ` : "Feels right for you at "}</span><b>{good.length ? good.join(" · ") : "no hour tonight, try another day"}</b></div>
             </div>
           </section>
         </div></div>

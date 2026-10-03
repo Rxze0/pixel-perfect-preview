@@ -168,7 +168,7 @@ function App() {
             <button className="ghost" onClick={() => go("setup")}>Back to guest view</button>
           </div>
           <div className="title">{RESTAURANT_NAME} · Manager</div>
-          <div className="meta"><span><span className="dot" />Live · updated 1 min ago</span><span>·</span><span>Sample data</span></div>
+          <div className="meta">{liveBadge}<span>·</span><span>Sample data</span></div>
         </div>
         <div className="scroll" ref={scrollRef}><div className="body">
           <section className="group">
@@ -206,6 +206,7 @@ function App() {
             )}
           </section>
         </div></div>
+        {sheet}
       </main>
     );
   }
@@ -219,7 +220,7 @@ function App() {
     return (
       <main className="app" aria-live="polite">
         {header(RESTAURANT_NAME, (
-          <div className="meta"><span><span className="dot" />Live · updated 1 min ago</span><span>·</span><span>{o.label}</span><span>·</span><span>{diet}</span></div>
+          <div className="meta">{liveBadge}<span>·</span><span>{o.label}</span><span>·</span><span>{diet}</span></div>
         ))}
         <div className="scroll" ref={scrollRef}><div className="body">
           <section className="hero">
@@ -256,6 +257,7 @@ function App() {
           </section>
         </div></div>
         {tabs}
+        {sheet}
       </main>
     );
   }

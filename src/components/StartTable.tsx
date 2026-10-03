@@ -51,10 +51,14 @@ export function StartTable({ onGuest, onRestaurant }: { onGuest: () => void; onR
           <ellipse cx={plate[0]} cy={plate[1] + 6} rx="34" ry="16" fill="#1B1E27" />
           <ellipse cx={plate[0]} cy={plate[1]} rx="32" ry="15" fill="#333949" />
           <ellipse cx={plate[0]} cy={plate[1]} rx="22" ry="10" fill="#282D3B" />
-          {/* fork */}
-          <g transform={`translate(${plate[0] - 52} ${plate[1] - 2}) rotate(-12)`}>
+          {/* fork — lying flat on the tabletop */}
+          <g transform={`translate(${plate[0] - 50} ${plate[1] + 4}) rotate(26.5) scale(1 0.5)`}>
+            <ellipse cx="0" cy="4" rx="7" ry="24" fill="#1B1E27" opacity="0.6" />
             <rect x="-2" y="-6" width="4" height="26" rx="2" fill="#9AA3B5" />
-            <rect x="-5" y="-14" width="10" height="10" rx="3" fill="#9AA3B5" />
+            <rect x="-5" y="-16" width="10" height="12" rx="3" fill="#9AA3B5" />
+            <line x1="-2.5" y1="-16" x2="-2.5" y2="-22" stroke="#9AA3B5" strokeWidth="1.6" />
+            <line x1="0" y1="-16" x2="0" y2="-22" stroke="#9AA3B5" strokeWidth="1.6" />
+            <line x1="2.5" y1="-16" x2="2.5" y2="-22" stroke="#9AA3B5" strokeWidth="1.6" />
           </g>
           {/* knife */}
           <g transform={`translate(${plate[0] + 52} ${plate[1] - 2}) rotate(12)`}>

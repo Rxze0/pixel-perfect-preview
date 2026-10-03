@@ -67,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!s) { setUser(null); setIsStaff(false); setReady(true); return; }
       const r = await loadUser(s.user.id, s.user.email ?? "");
       setUser(r.user); setIsStaff(r.staff); setReady(true);
+      setView((v) => (v === "auth" || v === "welcome" || v === "gate" ? null : v));
       if (staffNext.current && r.staff) { const n = staffNext.current; staffNext.current = null; setView(null); n(); }
     };
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {

@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
   component: App,
 });
 
-type Screen = "start" | "setup" | "tonight" | "safe" | "manager" | "tables" | "table";
+type Screen = "start" | "setup" | "tonight" | "safe" | "manager" | "tables" | "table" | "after";
 
 function Icon({ kind }: { kind: Kind | "info" }) {
   if (kind === "ok") return <svg className="ic-ok" width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>;
@@ -37,6 +37,8 @@ function App() {
   const [promo, setPromo] = useState(false);
   const [howWeKnow, setHowWeKnow] = useState(false);
   const [tableId, setTableId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [savedDishes, setSavedDishes] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -112,6 +114,7 @@ function App() {
     <nav className="tabs" aria-label="Sections">
       <button className="tab" onClick={() => go("tonight")} aria-current={screen === "tonight" ? "page" : undefined}>Tonight</button>
       <button className="tab" onClick={() => go("safe")} aria-current={screen === "safe" ? "page" : undefined}>Safe for your table · {safeCount}</button>
+      <button className="tab" onClick={() => go("after")} aria-current={screen === "after" ? "page" : undefined}>After your visit</button>
     </nav>
   );
 
@@ -368,6 +371,68 @@ function App() {
         </div></div>
         {tabs}
         {sheet}
+      </main>
+    );
+  }
+
+  if (screen === "after") {
+    const options = ["Food", "Speed", "Service", "Atmosphere", "Price", "Nothing, it was great"];
+    const great = feedback === "Nothing, it was great";
+    return (
+      <main key="after" className="app" aria-live="polite">
+        {header("After your visit", <div className="muted" style={{ fontSize: 14 }}>Thanks for coming by tonight</div>)}
+        <div className="scroll" ref={scrollRef}><div className="body">
+          <section className="group">
+            <div className="label">What could have been better tonight?</div>
+            <div className="chips">
+              {options.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={`chip${feedback === option ? " on" : ""}`}
+                  aria-pressed={feedback === option}
+                  onClick={() => setFeedback(feedback === option ? null : option)}
+                >{option}</button>
+              ))}
+            </div>
+            {feedback && !great && (
+              <div className="note"><Icon kind="info" /><span>Thanks — noted for the team. We'll work on the {feedback.toLowerCase()}.</span></div>
+            )}
+          </section>
+          {great && (
+            <section className="group">
+              <div className="label">Save the dishes you liked?</div>
+              <div className="muted" style={{ fontSize: 13 }}>We'll remember them for your next visit.</div>
+              <div className="dish-save-list">
+                {DISHES.map((d) => {
+                  const saved = savedDishes.includes(d.name);
+                  return (
+                    <label key={d.name} className={`dish-save${saved ? " saved" : ""}`}>
+                      <input
+                        type="checkbox"
+                        checked={saved}
+                        onChange={() =>
+                          setSavedDishes((prev) =>
+                            prev.includes(d.name) ? prev.filter((n) => n !== d.name) : [...prev, d.name]
+                          )
+                        }
+                      />
+                      <span className="dish-save-box" aria-hidden="true">{saved ? "✓" : ""}</span>
+                      <span className="dish-save-info">
+                        <b>{d.name}</b>
+                        <span className="dish-save-tags">{d.desc}</span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              {savedDishes.length > 0 && (
+                <div className="note"><Icon kind="ok" /><span>Saved {savedDishes.length} {savedDishes.length === 1 ? "dish" : "dishes"} for next time.</span></div>
+              )}
+            </section>
+          )}
+        </div></div>
+        {tabs}
       </main>
     );
   }

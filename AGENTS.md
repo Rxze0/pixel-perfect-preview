@@ -11,4 +11,4 @@
 
 - SitABit sample data and ranking/allergen logic live in src/lib/sitabit.ts, UI in src/routes/index.tsx; styles are the prototype CSS ported verbatim into src/styles.css — keeps parity with the original prototype.
 - Screen motion uses progressive browser view transitions with CSS entrance fallback and reduced-motion overrides — keeps navigation smooth without a runtime animation dependency.
-- Auth is demo-only (src/lib/auth.tsx, localStorage session + accounts); gate member features with useAuth().requireUser() — keeps the prototype backend-free until real accounts are added.
+- Accounts, profiles, staff roles (user_roles + has_role), bookings and feedback live in Lovable Cloud; src/lib/auth.tsx wraps it behind useAuth() so screens stay unchanged. Booked tables are read via the booked_tables() function so guests never see who booked.

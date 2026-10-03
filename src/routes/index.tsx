@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { toast } from "sonner";
-import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person } from "@/lib/sitabit";
+import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, TABLES, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
   component: App,
 });
 
-type Screen = "start" | "setup" | "tonight" | "safe" | "manager";
+type Screen = "start" | "setup" | "tonight" | "safe" | "manager" | "tables" | "table";
 
 function Icon({ kind }: { kind: Kind | "info" }) {
   if (kind === "ok") return <svg className="ic-ok" width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>;
@@ -36,6 +36,7 @@ function App() {
   const [newName, setNewName] = useState("");
   const [promo, setPromo] = useState(false);
   const [howWeKnow, setHowWeKnow] = useState(false);
+  const [tableId, setTableId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

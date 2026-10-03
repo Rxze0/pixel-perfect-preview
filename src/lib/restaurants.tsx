@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode, type Context } from "react";
 import type { MenuDish } from "@/lib/menu";
+import { supabase } from "@/integrations/supabase/client";
 
 /* Data shape for a venue. Sample data — replace with the real restaurants later. */
 export type TableStatus = "free" | "booked" | "taken";
@@ -87,9 +88,14 @@ export const RESTAURANTS: Restaurant[] = [
 ];
 
 export type Booking = { restaurantId: string; tableId: string; time: string };
-type Ctx = { restaurant: Restaurant; setRestaurant: (id: string) => void; bookings: Booking[]; book: (b: Booking) => void; statusOf: (t: FloorTable) => TableStatus };
+type Ctx = { restaurant: Restaurant; setRestaurant: (id: string) => void; bookings: Booking[]; book: (b: Booking) => Promise<string | null>; statusOf: (t: FloorTable) => TableStatus };
 const rg = globalThis as unknown as { __sitabitRestCtx?: Context<Ctx | null> };
 const RCtx = (rg.__sitabitRestCtx ??= createContext<Ctx | null>(null));
+
+async function fetchBookings(): Promise<Booking[]> {
+  const { data } = await supabase.rpc("booked_tables");
+  return (data ?? []).map((r) => ({ restaurantId: r.restaurant_id, tableId: r.table_id, time: r.slot }));
+}
 
 export function RestaurantProvider({ children }: { children: ReactNode }) {
   const [id, setId] = useState(RESTAURANTS[0]!.id);
@@ -97,7 +103,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const saved = localStorage.getItem("sitabit-restaurant");
     if (saved && RESTAURANTS.some((r) => r.id === saved)) setId(saved);
-    try { setBookings(JSON.parse(localStorage.getItem("sitabit-bookings") || "[]")); } catch { /* ignore */ }
+    void fetchBookings().then(setBookings);
   }, []);
   const restaurant = RESTAURANTS.find((r) => r.id === id)!;
   useEffect(() => { document.documentElement.style.setProperty("--accent", restaurant.accent); }, [restaurant.accent]);
@@ -105,7 +111,12 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     restaurant,
     setRestaurant: (n) => { setId(n); localStorage.setItem("sitabit-restaurant", n); },
     bookings,
-    book: (b) => setBookings((bs) => { const next = [...bs, b]; localStorage.setItem("sitabit-bookings", JSON.stringify(next)); return next; }),
+    book: async (b) => {
+      const { error } = await supabase.from("bookings").insert({ restaurant_id: b.restaurantId, table_id: b.tableId, slot: b.time });
+      setBookings(await fetchBookings());
+      if (error) return error.code === "23505" ? "Someone just booked this table for that time." : "Booking didn't go through. Please try again.";
+      return null;
+    },
     statusOf: (tb) => bookings.some((b) => b.restaurantId === id && b.tableId === tb.id) ? "booked" : tb.status,
   };
   return <RCtx.Provider value={value}>{children}</RCtx.Provider>;

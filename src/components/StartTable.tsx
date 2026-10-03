@@ -18,6 +18,11 @@ export function StartTable({ onGuest, onRestaurant }: { onGuest: () => void; onR
   const bell = iso(7.4, 1.6);
   return (
     <div className="start-table">
+      <div className="side-lab" aria-hidden="true">
+        <b>I'm the restaurant</b>
+        <span>See your tables and guests</span>
+      </div>
+      <div className="start-svg-wrap">
       <svg viewBox="0 0 400 360" className="start-svg" aria-hidden="true">
         {/* table body */}
         <polygon points={`${A.join(",")} ${B.join(",")} ${B[0]},${B[1] + DEPTH} ${A[0]},${A[1] + DEPTH}`} fill="#15171E" />

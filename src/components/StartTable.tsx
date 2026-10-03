@@ -69,15 +69,13 @@ export function StartTable({ onGuest, onRestaurant }: { onGuest: () => void; onR
           </g>
         </g>
       </svg>
-
-      <button type="button" className="side-btn rest" onClick={onRestaurant} aria-label="I'm the restaurant — see your tables and guests">
-        <b>I'm the restaurant</b>
-        <span>See your tables and guests</span>
-      </button>
-      <button type="button" className="side-btn guest" onClick={onGuest} aria-label="I'm a guest — find your vibe and safe dishes">
+      <button type="button" className="side-btn rest" onClick={onRestaurant} aria-label="I'm the restaurant — see your tables and guests" />
+      <button type="button" className="side-btn guest" onClick={onGuest} aria-label="I'm a guest — find your vibe and safe dishes" />
+      </div>
+      <div className="side-lab" aria-hidden="true">
         <b>I'm a guest</b>
         <span>Find your vibe and safe dishes</span>
-      </button>
+      </div>
     </div>
   );
 }

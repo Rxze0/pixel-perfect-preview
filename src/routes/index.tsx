@@ -9,15 +9,15 @@ import { BookingMap } from "@/components/BookingMap";
 import { RestaurantPicker, useRestaurant } from "@/lib/restaurants";
 import { AccountButton, AFTER_LOGIN_KEY, useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { ALLERGENS, DISHES, HOURS, OCC, TABLES, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
+import { ALLERGENS, DISHES, HOURS, OCC, TABLES, ZONES, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "SitABit" },
-      { name: "description", content: "Find where and when this place feels right for your occasion, and which dishes are safe for your table." },
+      { name: "description", content: "Find where and when this place feels right for your occasion." },
       { property: "og:title", content: "SitABit" },
-      { property: "og:description", content: "Best zone and time for your occasion, plus dishes safe for everyone at your table." },
+      { property: "og:description", content: "Best zone and time for your occasion." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")({
   component: App,
 });
 
-type Screen = "start" | "setup" | "tonight" | "safe" | "manager" | "tables" | "table" | "after";
+type Screen = "start" | "setup" | "tonight" | "manager" | "tables" | "table" | "after";
 
 function Icon({ kind }: { kind: Kind | "info" }) {
   if (kind === "ok") return <svg className="ic-ok" width="24" height="24" viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>;
@@ -78,8 +78,6 @@ function App() {
   }, [howWeKnow]);
 
   const o = OCC.find((x) => x.id === occId)!;
-  const dishes = checkedDishes(people);
-  const safeCount = dishes.filter((d) => d.kind === "ok").length;
   const go = (s: Screen) => {
     if (s === screen) return;
     const changeScreen = () => {
@@ -149,10 +147,6 @@ function App() {
       <button className="tab" onClick={() => go("tonight")} aria-current={screen === "tonight" ? "page" : undefined}>
         <svg className="tab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>
         <span>Tonight</span>
-      </button>
-      <button className="tab" onClick={() => go("safe")} aria-current={screen === "safe" ? "page" : undefined} aria-label={`Safe for your table, ${safeCount} dishes`}>
-        <svg className="tab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" /><path d="M9 12l2 2 4-4" /></svg>
-        <span>Safe · {safeCount}</span>
       </button>
       <button className="tab" onClick={() => go("after")} aria-current={screen === "after" ? "page" : undefined}>
         <svg className="tab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" /></svg>
@@ -495,22 +489,5 @@ function App() {
     );
   }
 
-  const anyRestrictions = people.some((p) => p.restrictions.length);
-  const summary = anyRestrictions
-    ? `${safeCount} of ${DISHES.length} dishes are safe for everyone at your table`
-    : "Add your restrictions to see what is safe for your table";
-  return (
-    <main key="safe" className="app" aria-live="polite">
-      {header("Safe for your table", <div className="muted" style={{ fontSize: 14 }}>{summary}</div>)}
-      <div className="scroll" ref={scrollRef}><div className="body" style={{ gap: 10 }}>
-        <div className="note"><Icon kind="info" /><span>Checked against the kitchen's live recipes for everyone in your group. Severe allergy? Tell your waiter too, since kitchens share equipment.</span></div>
-        <div className="dishes">
-          {dishes.map((d) => (
-            <div className="dish" key={d.name}><Icon kind={d.kind} /><div><b>{d.name}</b><div className="d">{d.desc}</div><div className={`s ${d.kind}`}>{d.status}</div></div></div>
-          ))}
-        </div>
-      </div></div>
-      {tabs}
-    </main>
-  );
+  return null;
 }

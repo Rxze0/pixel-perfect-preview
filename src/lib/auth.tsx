@@ -1,6 +1,6 @@
 /* Demo-only auth: sessions and accounts live in this browser's localStorage.
    Not secure — any email/password works. Swap for real accounts later. */
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode, type Context } from "react";
 import { ALLERGENS } from "@/lib/sitabit";
 
 export type User = { name: string; email: string; restrictions: string[]; favorites: string[] };
@@ -24,7 +24,7 @@ type Ctx = {
   openProfile: () => void;
 };
 // Reuse one context across hot reloads so provider and consumers always match.
-const g = globalThis as unknown as { __sitabitAuthCtx?: React.Context<Ctx | null> };
+const g = globalThis as unknown as { __sitabitAuthCtx?: Context<Ctx | null> };
 const AuthCtx = (g.__sitabitAuthCtx ??= createContext<Ctx | null>(null));
 export const useAuth = () => {
   const c = useContext(AuthCtx);

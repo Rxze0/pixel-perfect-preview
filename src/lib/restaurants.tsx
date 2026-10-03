@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode, type Context } from "react";
 import type { MenuDish } from "@/lib/menu";
 
 /* Data shape for a venue. Sample data — replace with the real restaurants later. */
@@ -88,7 +88,8 @@ export const RESTAURANTS: Restaurant[] = [
 
 export type Booking = { restaurantId: string; tableId: string; time: string };
 type Ctx = { restaurant: Restaurant; setRestaurant: (id: string) => void; bookings: Booking[]; book: (b: Booking) => void; statusOf: (t: FloorTable) => TableStatus };
-const RCtx = createContext<Ctx | null>(null);
+const rg = globalThis as unknown as { __sitabitRestCtx?: Context<Ctx | null> };
+const RCtx = (rg.__sitabitRestCtx ??= createContext<Ctx | null>(null));
 
 export function RestaurantProvider({ children }: { children: ReactNode }) {
   const [id, setId] = useState(RESTAURANTS[0]!.id);

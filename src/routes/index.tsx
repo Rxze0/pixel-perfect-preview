@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { FloorPlan } from "@/components/FloorPlan";
 import { StartTable } from "@/components/StartTable";
 import { OwnerInsights } from "@/components/OwnerInsights";
+import { AccountButton, useAuth } from "@/lib/auth";
 import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, TABLES, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
@@ -44,6 +45,14 @@ function App() {
   const [savedDishes, setSavedDishes] = useState<string[]>([]);
   const [planHour, setPlanHour] = useState<{ h: string; occ: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const auth = useAuth();
+  // Signed-in: "Me" uses the profile's restrictions, saved dishes come from favorites.
+  useEffect(() => {
+    if (!auth.user) return;
+    setPeople((ps) => ps.map((p) => p.id === "p0" ? { ...p, name: auth.user!.name, restrictions: auth.user!.restrictions } : p));
+    setSavedDishes(auth.user.favorites);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.user?.email]);
 
   useEffect(() => {
     if (!howWeKnow) return;
@@ -71,16 +80,21 @@ function App() {
   };
 
   const addPerson = () => {
+    if (!auth.requireUser("Adding people and their food needs")) return;
     const name = newName.trim();
     if (!name) return;
     setPeople([...people, { id: "p" + nextPersonId++, name, restrictions: [] }]);
     setNewName("");
   };
   const removePerson = (id: string) => setPeople(people.filter((p) => p.id !== id));
-  const toggleRestriction = (id: string, allergen: string) =>
-    setPeople(people.map((p) => p.id === id
+  const toggleRestriction = (id: string, allergen: string) => {
+    if (!auth.requireUser("Saving food preferences")) return;
+    const next = people.map((p) => p.id === id
       ? { ...p, restrictions: p.restrictions.includes(allergen) ? p.restrictions.filter((x) => x !== allergen) : [...p.restrictions, allergen] }
-      : p));
+      : p);
+    setPeople(next);
+    if (id === "p0") auth.updateUser({ restrictions: next[0]!.restrictions });
+  };
 
   const liveBadge = (
     <button className="live-btn" onClick={() => setHowWeKnow(true)}>
@@ -135,7 +149,7 @@ function App() {
     return (
       <main key="start" className="app" aria-live="polite">
         <div className="scroll" ref={scrollRef}><div className="setup">
-          <div className="logo" style={{ fontSize: 22 }}>SitABit</div>
+          <div className="head-row"><div className="logo" style={{ fontSize: 22 }}>SitABit</div><AccountButton /></div>
           <div>
             <h1>Who's at the table?</h1>
           </div>
@@ -149,7 +163,7 @@ function App() {
     return (
       <main key="setup" className="app" aria-live="polite">
         <div className="scroll" ref={scrollRef}><div className="setup">
-          <div className="logo" style={{ fontSize: 22 }}>SitABit</div>
+          <div className="head-row"><div className="logo" style={{ fontSize: 22 }}>SitABit</div><AccountButton /></div>
           <div>
             <h1>What's tonight?</h1>
             <p className="muted">Tell us once. We'll show you where and when this place feels right for you.</p>
@@ -406,7 +420,7 @@ function App() {
                   type="button"
                   className={`chip${feedback === option ? " on" : ""}`}
                   aria-pressed={feedback === option}
-                  onClick={() => setFeedback(feedback === option ? null : option)}
+                  onClick={() => { if (auth.requireUser("Leaving feedback")) setFeedback(feedback === option ? null : option); }}
                 >{option}</button>
               ))}
             </div>
@@ -426,11 +440,12 @@ function App() {
                       <input
                         type="checkbox"
                         checked={saved}
-                        onChange={() =>
-                          setSavedDishes((prev) =>
-                            prev.includes(d.name) ? prev.filter((n) => n !== d.name) : [...prev, d.name]
-                          )
-                        }
+                        onChange={() => {
+                          if (!auth.requireUser("Saving favorite dishes")) return;
+                          const next = savedDishes.includes(d.name) ? savedDishes.filter((n) => n !== d.name) : [...savedDishes, d.name];
+                          setSavedDishes(next);
+                          auth.updateUser({ favorites: next });
+                        }}
                       />
                       <span className="dish-save-box" aria-hidden="true">{saved ? "✓" : ""}</span>
                       <span className="dish-save-info">

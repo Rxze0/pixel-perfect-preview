@@ -420,7 +420,7 @@ function App() {
                       <span className="dish-save-box" aria-hidden="true">{saved ? "✓" : ""}</span>
                       <span className="dish-save-info">
                         <b>{d.name}</b>
-                        <span className="dish-save-tags">{d.tags.join(" · ")}</span>
+                        <span className="dish-save-tags">{d.desc}</span>
                       </span>
                     </label>
                   );

@@ -21,7 +21,7 @@ const REGULARS = [
 type Regular = (typeof REGULARS)[number];
 const AWAY_DAYS = 30;
 const daysSince = (d: string) => {
-  const [dd, mm, yy] = d.split(".").map(Number);
+  const [dd = 1, mm = 1, yy = 2026] = d.split(".").map(Number);
   return Math.max(0, Math.floor((Date.now() - new Date(yy, mm - 1, dd).getTime()) / 86400000));
 };
 /* Simple rule-based offer from the guest's first matching preference (no AI). */

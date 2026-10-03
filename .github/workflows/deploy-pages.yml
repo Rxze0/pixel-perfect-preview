@@ -25,14 +25,13 @@ jobs:
           bun-version: 1.3.3
 
       - name: Install
-        run: bun install || (echo "Retrying install without lockfile"; rm -f bun.lock && bun install)
+        run: bun install
 
       - name: Build static site
         env:
           GITHUB_PAGES_BASE: /${{ github.event.repository.name }}/
         run: |
           bunx vite build
-          # Output folder differs by build environment: dist/client or .output/public.
           OUT=""
           for d in dist/client .output/public; do
             if [ -d "$d" ]; then OUT="$d"; break; fi
@@ -42,12 +41,12 @@ jobs:
           for f in "$OUT/_shell.html" "$OUT/index.html"; do
             if [ -f "$f" ]; then SHELL_HTML="$f"; break; fi
           done
-          if [ -z "$SHELL_HTML" ]; then echo "No HTML page found in $OUT"; find "$OUT" -maxdepth 2 -name "*.html"; exit 1; fi
+          if [ -z "$SHELL_HTML" ]; then echo "No HTML found"; find "$OUT" -maxdepth 2 -name "*.html"; exit 1; fi
           if [ "$SHELL_HTML" != "$OUT/index.html" ]; then cp "$SHELL_HTML" "$OUT/index.html"; fi
           cp "$SHELL_HTML" "$OUT/404.html"
           touch "$OUT/.nojekyll"
           rm -rf site && cp -r "$OUT" site
-          echo "Publishing from $OUT"; ls site
+          ls site
 
       - uses: actions/upload-pages-artifact@v3
         with:

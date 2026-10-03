@@ -4,6 +4,7 @@ import { flushSync } from "react-dom";
 import { toast } from "sonner";
 import { FloorPlan } from "@/components/FloorPlan";
 import { StartTable } from "@/components/StartTable";
+import { OwnerInsights } from "@/components/OwnerInsights";
 import { ALLERGENS, DISHES, HOURS, OCC, RESTAURANT_NAME, TABLES, ZONES, checkedDishes, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
@@ -240,6 +241,7 @@ function App() {
             <div className="stat-n">128</div>
             <div className="stat-l">Guests who checked SitABit today</div>
           </section>
+          <OwnerInsights />
           <section className="group">
             <button className="cta" onClick={() => setPromo(!promo)}>{promo ? "Hide preview" : "Promote quiet hours"}</button>
             <button className="ghost" onClick={() => go("tables")}>Tables · for waiters</button>

@@ -53,6 +53,7 @@ function MenuPage() {
             <h2>{d.name}</h2>
             <p>{d.ingredients}</p>
             <div className="kbju">
+              {d.price != null && <span className="kcal price"><b>{d.price.toLocaleString("ru-RU")}</b> ₸</span>}
               <span className="kcal"><b>{d.calories}</b> kcal</span>
               <span><b>{d.protein}</b>g protein</span>
               <span><b>{d.fat}</b>g fat</span>

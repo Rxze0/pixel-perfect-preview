@@ -378,8 +378,8 @@
 
 /* Restaurant helper (AI chat) */
 .kbju .price b { color: var(--accent); }
-.ai-fab { position: fixed; right: 18px; bottom: 88px; z-index: 300; width: 56px; height: 56px; border-radius: 50%; border: 1px solid var(--accent); background: var(--accent); color: #12141C; font-size: 22px; box-shadow: 0 10px 30px rgba(0,0,0,.45); cursor: pointer; }
-.ai-panel { position: fixed; right: 18px; bottom: 156px; z-index: 300; width: min(380px, calc(100vw - 24px)); height: min(560px, calc(100vh - 190px)); display: flex; flex-direction: column; background: #1A1D28; border: 1px solid rgba(255,255,255,.1); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.6); overflow: hidden; animation: aiIn .25s ease; }
+.ai-fab { position: fixed; right: 16px; bottom: 16px; z-index: 300; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--accent); background: var(--accent); color: #12141C; font-size: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.45); cursor: pointer; }
+.ai-panel { position: fixed; right: 16px; bottom: 74px; z-index: 300; width: min(380px, calc(100vw - 24px)); height: min(560px, calc(100vh - 100px)); display: flex; flex-direction: column; background: #1A1D28; border: 1px solid rgba(255,255,255,.1); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.6); overflow: hidden; animation: aiIn .25s ease; }
 @keyframes aiIn { from { opacity: 0; transform: translateY(12px); } }
 @media (prefers-reduced-motion: reduce) { .ai-panel { animation: none; } }
 .ai-head { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.08); display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }

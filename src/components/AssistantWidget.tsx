@@ -41,6 +41,8 @@ export function AssistantWidget() {
     } finally { setBusy(false); stop.current = null; }
   }
 
+  if (!auth.ready || !auth.session) return null;
+
   return (
     <>
       <button className="ai-fab" aria-label="Open restaurant helper" onClick={() => setOpen((o) => !o)}>{open ? "✕" : "🍽️"}</button>

@@ -45,7 +45,6 @@ function App() {
   const [promo, setPromo] = useState(false);
   const [howWeKnow, setHowWeKnow] = useState(false);
   const [tableId, setTableId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
   const [savedDishes, setSavedDishes] = useState<string[]>([]);
   const [reviewText, setReviewText] = useState("");
   const [reviewSent, setReviewSent] = useState(false);

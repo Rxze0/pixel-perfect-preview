@@ -1,4 +1,4 @@
-export type MenuDish = { category: string; name: string; ingredients: string; calories: number; protein: number; fat: number; carbs: number };
+export type MenuDish = { category: string; name: string; ingredients: string; calories: number; protein: number; fat: number; carbs: number; price?: number };
 
 export const MENU_CATEGORIES = ["All", "Starters", "Salads", "Soups", "Mains", "Pasta & risotto", "Desserts"];
 

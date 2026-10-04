@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { clearFeedback, loadFeedback, type FeedbackEntry } from "@/lib/feedback";
 import { useRestaurant } from "@/lib/restaurants";
 
-const REASONS = ["Food", "Speed", "Service", "Atmosphere", "Price", "Nothing, it was great"];
 
 export function FeedbackInsights() {
   const restaurantId = useRestaurant().restaurant.id;
@@ -15,29 +14,15 @@ export function FeedbackInsights() {
     return () => { window.removeEventListener("sitabit-feedback", sync); window.removeEventListener("storage", sync); };
   }, []);
   const list = all.filter((f) => f.restaurantId === restaurantId);
-  const votes = list.filter((f) => f.kind === "reason");
   const reviews = list.filter((f) => f.kind === "review").reverse();
-  const max = Math.max(1, ...REASONS.map((r) => votes.filter((v) => v.text === r).length));
 
   return (
     <section className="group">
-      <div className="label">Guest feedback & answers</div>
+      <div className="label">Guest reviews</div>
       <div className="fb-stats">
-        <div className="fb-stat"><b>{votes.length}</b><span>Votes</span></div>
         <div className="fb-stat"><b>{reviews.length}</b><span>Reviews</span></div>
-        <div className="fb-stat"><b>{votes.length ? Math.round((votes.filter((v) => v.text === REASONS[5]).length / votes.length) * 100) : 0}%</b><span>Loved it</span></div>
-      </div>
-      <div className="fb-bars">
-        {REASONS.map((r) => {
-          const n = votes.filter((v) => v.text === r).length;
-          return (
-            <div className="fb-bar" key={r}>
-              <span>{r}</span>
-              <i><em style={{ width: `${(n / max) * 100}%` }} /></i>
-              <b>{n}</b>
-            </div>
-          );
-        })}
+        <div className="fb-stat"><b>{reviews.filter((r) => Date.now() - new Date(r.at).getTime() < 7 * 864e5).length}</b><span>This week</span></div>
+        <div className="fb-stat"><b>{reviews.length ? Math.round(reviews.reduce((n, r) => n + r.text.length, 0) / reviews.length) : 0}</b><span>Avg. length</span></div>
       </div>
       <div className="label" style={{ marginTop: 6 }}>Written reviews</div>
       <div className="fb-list" tabIndex={0} aria-label="Written reviews">

@@ -6,9 +6,16 @@ export const OCC = [
   { id: "family", label: "Family", sub: "Comfortable, room to sit", lo: 35, hi: 70, headline: "a family dinner" },
 ];
 export const ALLERGENS = [
-  { id: "nuts", label: "Nuts" }, { id: "gluten", label: "Gluten" }, { id: "dairy", label: "Dairy" },
-  { id: "seafood", label: "Seafood" }, { id: "eggs", label: "Eggs" },
+  { id: "nuts", label: "Nuts", sub: ["Peanuts", "Walnuts", "Almonds", "Hazelnuts", "Cashews", "Pistachios"] },
+  { id: "gluten", label: "Gluten", sub: ["Wheat", "Rye", "Barley", "Oats"] },
+  { id: "dairy", label: "Dairy", sub: ["Milk", "Cheese", "Butter", "Cream", "Lactose"] },
+  { id: "seafood", label: "Seafood", sub: ["Shrimp", "Crabs", "Mussels", "Oysters", "Squid", "Fish"] },
+  { id: "eggs", label: "Eggs", sub: ["Whole eggs", "Egg whites", "Mayonnaise"] },
 ];
+/** Sub-item restriction id, e.g. "seafood:shrimp". */
+export const subId = (cat: string, label: string) => `${cat}:${label.toLowerCase()}`;
+/** Category ids touched by a restriction list (whole category or any sub-item). */
+export const restrictionCats = (rs: string[]) => [...new Set(rs.map((r) => r.split(":")[0]!))];
 export const ZONES = [
   { name: "Quiet room", occ: 35, vibe: "Calm", sound: "soft music", free: 11, total: 16 },
   { name: "Terrace", occ: 50, vibe: "Relaxed", sound: "outdoor chatter", free: 6, total: 12 },
@@ -75,7 +82,12 @@ export type Occ = (typeof OCC)[number];
 export type Kind = "ok" | "ask" | "no";
 export type Person = { id: string; name: string; restrictions: string[] };
 
-export const lower = (id: string) => ALLERGENS.find((a) => a.id === id)!.label.toLowerCase();
+export const lower = (id: string) => {
+  const [cat, sub] = id.split(":");
+  const a = ALLERGENS.find((x) => x.id === cat);
+  if (!a) return id;
+  return sub ? (a.sub.find((x) => x.toLowerCase() === sub) ?? sub).toLowerCase() : a.label.toLowerCase();
+};
 
 export function fitOf(v: number, o: Occ) {
   if (v >= o.lo && v <= o.hi) return 0;
@@ -92,14 +104,14 @@ export function rankedZones(o: Occ) {
 export function checkedDishes(people: Person[]) {
   const rank: Record<Kind, number> = { ok: 0, ask: 1, no: 2 };
   return DISHES.map((d) => {
-    const blocked = people.filter((p) => d.a.some((x) => p.restrictions.includes(x)));
-    const traced = people.filter((p) => d.t.some((x) => p.restrictions.includes(x)) && !blocked.includes(p));
+    const blocked = people.filter((p) => d.a.some((x) => restrictionCats(p.restrictions).includes(x)));
+    const traced = people.filter((p) => d.t.some((x) => restrictionCats(p.restrictions).includes(x)) && !blocked.includes(p));
     if (blocked.length) {
-      const ids = d.a.filter((x) => blocked.some((p) => p.restrictions.includes(x)));
+      const ids = d.a.filter((x) => blocked.some((p) => restrictionCats(p.restrictions).includes(x)));
       return { ...d, kind: "no" as Kind, status: "Contains " + ids.map(lower).join(", ") + " · not safe for " + blocked.map((p) => p.name).join(", ") };
     }
     if (traced.length) {
-      const ids = d.t.filter((x) => traced.some((p) => p.restrictions.includes(x)));
+      const ids = d.t.filter((x) => traced.some((p) => restrictionCats(p.restrictions).includes(x)));
       return { ...d, kind: "ask" as Kind, status: "May contain traces of " + ids.map(lower).join(", ") + " · ask staff for " + traced.map((p) => p.name).join(", ") };
     }
     const anyRestrictions = people.some((p) => p.restrictions.length);

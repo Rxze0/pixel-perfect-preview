@@ -11,5 +11,5 @@
 
 - SitABit sample data and ranking/allergen logic live in src/lib/sitabit.ts, UI in src/routes/index.tsx; styles are the prototype CSS ported verbatim into src/styles.css — keeps parity with the original prototype.
 - Screen motion uses progressive browser view transitions with CSS entrance fallback and reduced-motion overrides — keeps navigation smooth without a runtime animation dependency.
-- Demo mode: accounts, bookings and feedback live only in the browser's localStorage (src/lib/auth.tsx behind useAuth(), src/lib/restaurants.tsx bookings, saveFeedback() in src/routes/index.tsx) — the Lovable Cloud backend is temporarily disconnected at the user's request; the Cloud tables/migration still exist for a future reconnect.
+- Demo mode: accounts, bookings and feedback live only in the browser's localStorage (src/lib/auth.tsx behind useAuth(), src/lib/restaurants.tsx bookings, src/lib/feedback.ts read by the owner FeedbackInsights panel) — the Lovable Cloud backend is temporarily disconnected at the user's request; the Cloud tables/migration still exist for a future reconnect.
 - GitHub Pages build is opt-in via GITHUB_PAGES_BASE (SPA shell + vite base, router basepath = BASE_URL) — Lovable hosting stays SSR and unaffected.

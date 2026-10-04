@@ -5,10 +5,12 @@ import { toast } from "sonner";
 import { FloorPlan } from "@/components/FloorPlan";
 import { StartTable } from "@/components/StartTable";
 import { OwnerInsights } from "@/components/OwnerInsights";
+import { FeedbackInsights } from "@/components/FeedbackInsights";
+import { saveFeedback } from "@/lib/feedback";
 import { BookingMap } from "@/components/BookingMap";
 import { RestaurantPicker, useRestaurant } from "@/lib/restaurants";
 import { AccountButton, useAuth } from "@/lib/auth";
-import { ALLERGENS, DISHES, HOURS, OCC, TABLES, ZONES, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
+import { ALLERGENS, DISHES, subId, HOURS, OCC, TABLES, ZONES, lower, rankedZones, type Kind, type Person, type Table } from "@/lib/sitabit";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,16 +36,6 @@ function Icon({ kind }: { kind: Kind | "info" }) {
 }
 
 let nextPersonId = 1;
-
-/** Demo mode: feedback is kept only in this browser. */
-function saveFeedback(restaurantId: string, reason: string) {
-  try {
-    const key = "sitabit-feedback";
-    const list = JSON.parse(localStorage.getItem(key) ?? "[]") as { restaurantId: string; reason: string; at: string }[];
-    list.push({ restaurantId, reason, at: new Date().toISOString() });
-    localStorage.setItem(key, JSON.stringify(list));
-  } catch { /* ignore */ }
-}
 
 function App() {
   const [screen, setScreen] = useState<Screen>("start");
@@ -79,9 +71,17 @@ function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [howWeKnow]);
 
+  const [openCat, setOpenCat] = useState<string | null>(null);
+  const historyRef = useRef<Screen[]>([]);
   const o = OCC.find((x) => x.id === occId)!;
-  const go = (s: Screen) => {
+  const back = () => {
+    const prev = historyRef.current.pop() ?? (screen === "setup" || screen === "manager" ? "start" : "setup");
+    go(prev, true);
+  };
+  const backBtn = <button className="back-btn" aria-label="Back" onClick={back}>←</button>;
+  const go = (s: Screen, isBack = false) => {
     if (s === screen) return;
+    if (!isBack) historyRef.current.push(screen);
     const changeScreen = () => {
       flushSync(() => setScreen(s));
       scrollRef.current?.scrollTo({ top: 0 });
@@ -137,7 +137,7 @@ function App() {
   const header = (title: string, subline: React.ReactNode) => (
     <div className="head">
       <div className="head-row">
-        <div className="logo" style={{ fontSize: 18 }}>SitABit</div>
+        <div className="head-left">{backBtn}<div className="logo" style={{ fontSize: 18 }}>SitABit</div></div>
         <button className="ghost" onClick={() => go("setup")}>Edit preferences</button>
       </div>
       <div className="title">{title}</div>
@@ -175,7 +175,7 @@ function App() {
     return (
       <main key="setup" className="app" aria-live="polite">
         <div className="scroll" ref={scrollRef}><div className="setup">
-          <div className="head-row"><div className="logo" style={{ fontSize: 22 }}>SitABit</div><AccountButton /></div>
+          <div className="head-row"><div className="head-left">{backBtn}<div className="logo" style={{ fontSize: 22 }}>SitABit</div></div><AccountButton /></div>
           <div>
             <h1>What's tonight?</h1>
             <p className="muted">Tell us once. We'll show you where and when this place feels right for you.</p>
@@ -202,10 +202,29 @@ function App() {
                     <b>{p.name}</b>
                     {people.length > 1 && <button className="person-remove" aria-label={`Remove ${p.name}`} onClick={() => removePerson(p.id)}>Remove</button>}
                   </div>
-                  <div className="chips" role="group" aria-label={`Food restrictions for ${p.name}`}>
-                    {ALLERGENS.map((a) => (
-                      <button key={a.id} className="chip" aria-pressed={p.restrictions.includes(a.id)} onClick={() => toggleRestriction(p.id, a.id)}>{a.label}</button>
-                    ))}
+                  <div className="acc" role="group" aria-label={`Food restrictions for ${p.name}`}>
+                    {ALLERGENS.map((a) => {
+                      const key = p.id + a.id;
+                      const open = openCat === key;
+                      const picked = a.sub.filter((x) => p.restrictions.includes(subId(a.id, x))).length;
+                      const whole = p.restrictions.includes(a.id);
+                      return (
+                        <div className={`acc-row${open ? " open" : ""}`} key={a.id}>
+                          <div className="acc-head">
+                            <button className="chip acc-chip" aria-pressed={whole} onClick={() => toggleRestriction(p.id, a.id)}>{a.label}{!whole && picked > 0 && <span className="acc-count">{picked}</span>}</button>
+                            <button className="acc-arrow" aria-expanded={open} aria-label={`${open ? "Hide" : "Show"} ${a.label} details`} onClick={() => setOpenCat(open ? null : key)}>▾</button>
+                          </div>
+                          {open && (
+                            <div className="acc-subs">
+                              {a.sub.map((x) => {
+                                const id = subId(a.id, x);
+                                return <button key={id} className="chip sub-chip" disabled={whole} aria-pressed={whole || p.restrictions.includes(id)} onClick={() => toggleRestriction(p.id, id)}>{x}</button>;
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -243,7 +262,7 @@ function App() {
       <main key="manager" className="app" aria-live="polite">
         <div className="head">
           <div className="head-row">
-            <div className="logo" style={{ fontSize: 18 }}>SitABit</div>
+            <div className="head-left">{backBtn}<div className="logo" style={{ fontSize: 18 }}>SitABit</div></div>
             <button className="ghost" onClick={() => go("start")}>Switch role</button>
             <button className="ghost" onClick={() => { auth.staffSignOut(); go("start"); }}>Staff sign out</button>
           </div>
@@ -274,6 +293,7 @@ function App() {
             <div className="stat-l">Guests who checked SitABit today</div>
           </section>
           <OwnerInsights />
+          <FeedbackInsights />
           <section className="group">
             <button className="cta" onClick={() => setPromo(!promo)}>{promo ? "Hide preview" : "Promote quiet hours"}</button>
             <button className="ghost" onClick={() => go("tables")}>Tables · for waiters</button>
@@ -299,7 +319,7 @@ function App() {
         <div className="head">
           <div className="head-row">
             <div className="logo" style={{ fontSize: 18 }}>SitABit</div>
-            <button className="ghost" onClick={() => go("manager")}>Back</button>
+            <button className="ghost" onClick={() => go("manager")}>← Back</button>
           </div>
           <div className="title">Tables</div>
           <div className="meta"><span>{TABLES.length} tables seated now</span><span>·</span><span>Sample data</span></div>
@@ -332,7 +352,7 @@ function App() {
         <div className="head">
           <div className="head-row">
             <div className="logo" style={{ fontSize: 18 }}>SitABit</div>
-            <button className="ghost" onClick={() => go("tables")}>All tables</button>
+            <button className="ghost" onClick={() => go("tables")}>← All tables</button>
           </div>
           <div className="title">{t.name}</div>
           <div className="meta"><span>{t.guests} {t.guests === 1 ? "guest" : "guests"}</span><span>·</span><span>{t.occasion}</span><span>·</span><span>{t.visits > 0 ? `Returning · ${t.visits} visits` : "First visit"}</span></div>
@@ -443,7 +463,7 @@ function App() {
                     if (!auth.requireUser("Leaving feedback")) return;
                     const next = feedback === option ? null : option;
                     setFeedback(next);
-                    if (next) saveFeedback(restaurantId, next);
+                    if (next) saveFeedback(restaurantId, "reason", next);
                   }}
                 >{option}</button>
               ))}
@@ -508,7 +528,7 @@ function App() {
                     if (!auth.requireUser("Leaving a review")) return;
                     const text = reviewText.trim();
                     if (text.length < 3) return;
-                    saveFeedback(restaurantId, text.slice(0, 500));
+                    saveFeedback(restaurantId, "review", text.slice(0, 500));
                     setReviewSent(true);
                   }}
                 >Send review</button>

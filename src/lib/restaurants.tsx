@@ -92,7 +92,7 @@ const rg = globalThis as unknown as { __sitabitRestCtx?: Context<Ctx | null> };
 const RCtx = (rg.__sitabitRestCtx ??= createContext<Ctx | null>(null));
 
 /* Demo mode: bookings are kept only in this browser. */
-const BOOKINGS_KEY = "sitabit-bookings";
+const BOOKINGS_KEY = "sitabit-bookings-v2"; // v2 = fresh start, old test bookings dropped
 function readBookings(): Booking[] {
   try { return JSON.parse(localStorage.getItem(BOOKINGS_KEY) ?? "[]") as Booking[]; } catch { return []; }
 }

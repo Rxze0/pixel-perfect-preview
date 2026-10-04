@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/assistant")({
         const { restaurantId, restrictions, favorites, messages } = parsed.data;
         const r = RESTAURANTS.find((x) => x.id === restaurantId);
         if (!r) return new Response("Unknown restaurant", { status: 400 });
-        const key = process.env.LOVABLE_API_KEY;
+        const key = process.env["LOVABLE_API_KEY"];
         if (!key) return new Response("Assistant is not configured", { status: 500 });
 
         const menu = r.menu.map((d) => `- ${d.name} [${d.category}] — ${d.price} ₸; ${d.calories} kcal, P${d.protein}/F${d.fat}/C${d.carbs}; ingredients: ${d.ingredients}`).join("\n");

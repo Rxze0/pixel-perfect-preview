@@ -444,35 +444,12 @@ function App() {
   }
 
   if (screen === "after") {
-    const options = ["Food", "Speed", "Service", "Atmosphere", "Price", "Nothing, it was great"];
-    const great = feedback === "Nothing, it was great";
     return (
       <main key="after" className="app" aria-live="polite">
         {header("After your visit", <div className="muted" style={{ fontSize: 14 }}>Thanks for coming by tonight</div>)}
         <div className="scroll" ref={scrollRef}><div className="body">
-          <section className="group">
-            <div className="label">What could have been better tonight?</div>
-            <div className="chips">
-              {options.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  className={`chip${feedback === option ? " on" : ""}`}
-                  aria-pressed={feedback === option}
-                  onClick={() => {
-                    if (!auth.requireUser("Leaving feedback")) return;
-                    const next = feedback === option ? null : option;
-                    setFeedback(next);
-                    if (next) saveFeedback(restaurantId, "reason", next);
-                  }}
-                >{option}</button>
-              ))}
-            </div>
-            {feedback && !great && (
-              <div className="note"><Icon kind="info" /><span>Thanks — noted for the team. We'll work on the {feedback.toLowerCase()}.</span></div>
-            )}
-          </section>
-          {great && (
+          {(
+
             <section className="group">
               <div className="label">Save the dishes you liked?</div>
               <div className="muted" style={{ fontSize: 13 }}>We'll remember them for your next visit.</div>
